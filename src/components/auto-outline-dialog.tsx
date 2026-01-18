@@ -297,7 +297,7 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      const buffer = '';
+      let buffer = ''; // 使用 let 而不是 const，因为需要更新
 
       if (!reader) {
         throw new Error('无法读取响应');
@@ -313,7 +313,11 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk; // 累积数据到 buffer
+        const lines = buffer.split('\n');
+
+        // 保留最后一个可能不完整的行
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('event:')) {
@@ -374,7 +378,9 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
                 throw new Error(data.error);
               }
             } catch (e: any) {
-              console.error('解析错误:', e);
+              // JSON 解析错误，可能是数据被分块了，等待下一个 chunk
+              console.error('解析错误（可能是因为数据被分块）:', e, 'Line:', line);
+              // 不抛出错误，继续处理下一行
             }
           }
         }
