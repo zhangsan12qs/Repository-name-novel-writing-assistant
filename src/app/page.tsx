@@ -3377,7 +3377,7 @@ ${data.story.ending || ''}`;
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const confirmed = confirm('确定要删除这个任务吗？删除后无法恢复。');
+      const confirmed = confirm('确定要删除这个任务吗？\n\n删除后无法恢复，已生成的内容也会被清除。');
       if (!confirmed) return;
 
       const response = await fetch(`/api/tasks/${taskId}/delete`, {
@@ -6643,14 +6643,24 @@ ${data.story.ending || ''}`;
                           </Button>
                         )}
                         {task.status === 'paused' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleResumeTask(task.id)}
-                            className="h-7 px-2 text-[10px]"
-                          >
-                            恢复
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResumeTask(task.id)}
+                              className="h-7 px-2 text-[10px]"
+                            >
+                              恢复
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="h-7 px-2 text-[10px] text-destructive"
+                            >
+                              取消
+                            </Button>
+                          </>
                         )}
                         {task.status === 'completed' && (
                           <>
