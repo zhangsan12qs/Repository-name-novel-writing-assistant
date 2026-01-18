@@ -167,36 +167,6 @@ export default function NovelEditor() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [worldSettings, setWorldSettings] = useState<WorldSetting[]>([]);
   const [activeTab, setActiveTab] = useState<'characters' | 'world' | 'tools' | 'tasks' | 'analysis' | 'analysisResult' | 'import'>('characters');
-  
-  // 新的步骤导航映射
-  const handleStepClick = (step: number) => {
-    switch(step) {
-      case 1: setActiveTab('characters'); break;
-      case 2: setActiveTab('tools'); break;
-      case 3: setActiveTab('analysis'); break;
-      case 4: setActiveTab('import'); break;
-      case 5: setActiveTab('tasks'); break;
-    }
-  };
-
-  const getCurrentStep = () => {
-    switch(activeTab) {
-      case 'characters':
-      case 'world':
-        return 1;
-      case 'tools':
-        return 2;
-      case 'analysis':
-      case 'analysisResult':
-        return 3;
-      case 'import':
-        return 4;
-      case 'tasks':
-        return 5;
-      default:
-        return 1;
-    }
-  };
 
   // 批量生成章节相关状态
   const [batchChapterGenerating, setBatchChapterGenerating] = useState(false);
@@ -5244,119 +5214,65 @@ ${data.story.ending || ''}`;
 
       {/* 右侧面板 */}
       <div className="w-96 border-l bg-card p-4 overflow-y-auto">
-        {/* 创作步骤导航 */}
-        <Card className="p-3 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
-          <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-2">
+        {/* 标签导航 */}
+        <div className="grid grid-cols-7 gap-1 mb-4">
+          <Button
+            size="sm"
+            variant={activeTab === 'characters' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('characters')}
+            className="h-9"
+          >
+            <Users className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'world' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('world')}
+            className="h-9"
+          >
+            <BookMarked className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'tools' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('tools')}
+            className="h-9"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'tasks' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('tasks')}
+            className="h-9"
+          >
+            <ListTodo className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'analysis' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('analysis')}
+            className="h-9"
+          >
+            <BookMarked className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'analysisResult' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('analysisResult')}
+            className="h-9"
+          >
             <FileText className="h-4 w-4" />
-            创作步骤
-          </h3>
-          <div className="grid grid-cols-5 gap-1">
-            <Button
-              size="sm"
-              variant={getCurrentStep() === 1 ? 'default' : 'ghost'}
-              onClick={() => handleStepClick(1)}
-              className="h-9 flex flex-col items-center gap-1 py-1"
-            >
-              <span className="text-[10px] font-bold">1</span>
-              <Users className="h-3 w-3" />
-              <span className="text-[9px]">设定</span>
-            </Button>
-            <Button
-              size="sm"
-              variant={getCurrentStep() === 2 ? 'default' : 'ghost'}
-              onClick={() => handleStepClick(2)}
-              className="h-9 flex flex-col items-center gap-1 py-1"
-            >
-              <span className="text-[10px] font-bold">2</span>
-              <Sparkles className="h-3 w-3" />
-              <span className="text-[9px]">生成</span>
-            </Button>
-            <Button
-              size="sm"
-              variant={getCurrentStep() === 3 ? 'default' : 'ghost'}
-              onClick={() => handleStepClick(3)}
-              className="h-9 flex flex-col items-center gap-1 py-1"
-            >
-              <span className="text-[10px] font-bold">3</span>
-              <BookOpen className="h-3 w-3" />
-              <span className="text-[9px]">分析</span>
-            </Button>
-            <Button
-              size="sm"
-              variant={getCurrentStep() === 4 ? 'default' : 'ghost'}
-              onClick={() => handleStepClick(4)}
-              className="h-9 flex flex-col items-center gap-1 py-1"
-            >
-              <span className="text-[10px] font-bold">4</span>
-              <Edit className="h-3 w-3" />
-              <span className="text-[9px]">改写</span>
-            </Button>
-            <Button
-              size="sm"
-              variant={getCurrentStep() === 5 ? 'default' : 'ghost'}
-              onClick={() => handleStepClick(5)}
-              className="h-9 flex flex-col items-center gap-1 py-1"
-            >
-              <span className="text-[10px] font-bold">5</span>
-              <ListTodo className="h-3 w-3" />
-              <span className="text-[9px]">任务</span>
-            </Button>
-          </div>
-          <div className="mt-2 text-[10px] text-blue-600 dark:text-blue-400">
-            {getCurrentStep() === 1 && '步骤1：设定人物和世界观'}
-            {getCurrentStep() === 2 && '步骤2：生成章节内容'}
-            {getCurrentStep() === 3 && '步骤3：拆书分析学习'}
-            {getCurrentStep() === 4 && '步骤4：改写和导入'}
-            {getCurrentStep() === 5 && '步骤5：查看和管理任务'}
-          </div>
-        </Card>
-
-        {/* 子标签导航（在设定、分析步骤中显示） */}
-        {getCurrentStep() === 1 && (
-          <div className="flex gap-2 mb-3">
-            <Button
-              size="sm"
-              variant={activeTab === 'characters' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('characters')}
-              className="flex-1"
-            >
-              <Users className="h-3 w-3 mr-1" />
-              人物设定
-            </Button>
-            <Button
-              size="sm"
-              variant={activeTab === 'world' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('world')}
-              className="flex-1"
-            >
-              <BookMarked className="h-3 w-3 mr-1" />
-              世界观
-            </Button>
-          </div>
-        )}
-
-        {getCurrentStep() === 3 && (
-          <div className="flex gap-2 mb-3">
-            <Button
-              size="sm"
-              variant={activeTab === 'analysis' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('analysis')}
-              className="flex-1"
-            >
-              <BookOpen className="h-3 w-3 mr-1" />
-              拆书分析
-            </Button>
-            <Button
-              size="sm"
-              variant={activeTab === 'analysisResult' ? 'default' : 'outline'}
-              onClick={() => setActiveTab('analysisResult')}
-              className="flex-1"
-            >
-              <FileText className="h-3 w-3 mr-1" />
-              分析结果
-            </Button>
-          </div>
-        )}
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'import' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('import')}
+            className="h-9"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* 高效模式开关 */}
         <Card className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800">
@@ -5390,6 +5306,7 @@ ${data.story.ending || ''}`;
 
         {/* 条件渲染，避免Tabs组件的性能问题 */}
         {activeTab === 'characters' && (
+          <div className="space-y-4">
             <Card className="p-4">
               <h3 className="font-medium mb-3">添加人物</h3>
               <div className="space-y-2">
@@ -5751,12 +5668,17 @@ ${data.story.ending || ''}`;
                   <div>💡 每个人物的出现和消失都应该有明确的剧情原因</div>
                 </div>
               </Card>
-              </div>
             )}
           </div>
         )}
 
         {activeTab === 'world' && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium">故事大纲</h3>
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={handleRegenerateFromOutline}
                   disabled={aiLoading || !outline.trim()}
@@ -5918,12 +5840,13 @@ ${data.story.ending || ''}`;
                   {aiResult}
                 </div>
               )}
-            </div>
-            )}
+            </Card>
           </div>
         )}
 
         {activeTab === 'tools' && (
+          <div className="space-y-4">
+            {/* 一键批量生成章节 */}
             <Card className="p-4 border-2 border-primary/20">
               <h3 className="font-medium mb-3 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -6406,7 +6329,7 @@ ${data.story.ending || ''}`;
           </div>
         )}
 
-        {activeTab === 'analysis' && (
+        {activeTab === 'tasks' && (
           <div className="space-y-4">
             {/* 任务队列 */}
             <Card className="p-4">
