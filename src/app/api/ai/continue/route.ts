@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
 import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
-import { getApiKey } from '@/lib/ai-config';
+import { GroqClient, GroqMessage } from '@/lib/groq-client';
+import { getApiKey, AiMode } from '@/lib/ai-config';
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, context, articleRequirements, apiKey, modelConfig } = await request.json();
+    const { content, context, articleRequirements, apiKey, modelConfig, aiMode } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -14,17 +15,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取 API Key（优先使用前端传来的，否则使用环境变量）
+    // 获取 API Key 和模式
     let finalApiKey: string;
-    let useSiliconFlow = false;
+    let mode: AiMode;
 
     try {
-      if (apiKey && apiKey.trim()) {
+      // 优先使用前端传来的配置
+      if (aiMode === 'user' && apiKey && apiKey.trim()) {
         finalApiKey = apiKey.trim();
-        useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
+        mode = AiMode.USER;
+      } else if (aiMode === 'developer') {
+        const config = getApiKey();
+        finalApiKey = config.key;
+        mode = config.mode;
       } else {
-        finalApiKey = getApiKey(); // 使用环境变量（Coze）
-        useSiliconFlow = false;
+        // 使用环境变量或默认配置
+        const config = getApiKey(apiKey);
+        finalApiKey = config.key;
+        mode = config.mode;
       }
     } catch (error) {
       return NextResponse.json(
@@ -33,12 +41,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取模型配置（如果有）
+    // 获取模型配置
     const config = modelConfig || {
-      model: 'deepseek-ai/DeepSeek-V3',
-      temperature: 0.8,
-      maxTokens: 2000,
-      topP: 0.9,
+      model: mode === AiMode.DEVELOPER ? 'llama-3.1-8b-instant' : 'deepseek-ai/DeepSeek-V3',
+      temperature: mode === AiMode.DEVELOPER ? 0.7 : 0.8,
+      maxTokens: mode === AiMode.DEVELOPER ? 4096 : 2000,
+      topP: mode === AiMode.DEVELOPER ? 1.0 : 0.9,
     };
 
     const systemPrompt = `你是一位专业的网络小说写作助手。你的任务是：
@@ -88,10 +96,10 @@ ${context ? `\n背景信息：${context}` : ''}`;
 
     const encoder = new TextEncoder();
 
-    // 使用硅基流动 API
-    if (useSiliconFlow) {
-      const siliconClient = new SiliconFlowClient(finalApiKey);
-      const messages: SiliconFlowMessage[] = [
+    // 使用 Groq（开发者模式）
+    if (mode === AiMode.DEVELOPER) {
+      const groqClient = new GroqClient(finalApiKey);
+      const messages: GroqMessage[] = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userContent },
       ];
@@ -99,7 +107,7 @@ ${context ? `\n背景信息：${context}` : ''}`;
       const readableStream = new ReadableStream({
         async start(controller) {
           try {
-            for await (const chunk of siliconClient.streamChat(messages, {
+            for await (const chunk of groqClient.streamChat(messages, {
               model: config.model,
               temperature: config.temperature,
               maxTokens: config.maxTokens,
@@ -122,32 +130,23 @@ ${context ? `\n背景信息：${context}` : ''}`;
       });
     }
 
-    // 使用 Coze SDK（环境变量）
-    const config = new Config({
-      apiKey: finalApiKey,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const cozeClient = new LLMClient(config);
-
-    const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      {
-        role: 'user' as const,
-        content: userContent,
-      },
+    // 使用硅基流动（用户模式）
+    const siliconClient = new SiliconFlowClient(finalApiKey);
+    const messages: SiliconFlowMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent },
     ];
-
-    const stream = cozeClient.stream(messages, {
-      temperature: 0.8,
-    });
 
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
-            if (chunk.content) {
-              controller.enqueue(encoder.encode(chunk.content.toString()));
-            }
+          for await (const chunk of siliconClient.streamChat(messages, {
+            model: config.model,
+            temperature: config.temperature,
+            maxTokens: config.maxTokens,
+            topP: config.topP,
+          })) {
+            controller.enqueue(encoder.encode(chunk));
           }
           controller.close();
         } catch (error) {

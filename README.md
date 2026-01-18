@@ -4,6 +4,27 @@
 
 这是一个专业的网络小说写作工具，提供完整的写作辅助功能，包括实时写作建议、人物设定管理、大纲规划和问题检查。
 
+## 🌟 核心特性
+
+### 🤖 双模式 AI 驱动
+
+本应用支持两种 AI 模式，灵活满足不同需求：
+
+#### 1. 开发者模式（推荐，完全免费）
+- **零配置**：用户无需 API Key，开箱即用
+- **完全免费**：使用 Groq 免费服务
+- **极速响应**：推理速度比 GPT-4 快 10 倍
+- **高质量模型**：Llama 3.1、Mixtral 等顶级开源模型
+- **适合场景**：公开网站、免费工具、演示
+
+#### 2. 用户模式（高级，灵活自定义）
+- **自主掌控**：用户使用自己的 API Key
+- **多种模型**：支持 DeepSeek、Qwen、Llama 等多种模型
+- **完全控制**：用户承担费用，数据自主掌控
+- **适合场景**：企业内部、付费服务、需要自定义模型
+
+**💡 提示**：首次使用默认进入开发者模式，用户可在左侧导航栏点击 **"AI 配置"** 按钮切换模式。
+
 ## 🚀 快速开始
 
 ### 方式一：本地运行（推荐开发者）
@@ -16,19 +37,33 @@ cd projects
 # 2. 安装依赖
 pnpm install
 
-# 3. 启动开发环境
+# 3. 创建 .env 文件（可选，用于本地 AI 功能）
+# 免费获取 Groq API Key: https://console.groq.com/keys
+echo "GROQ_API_KEY=你的_Groq_API_Key" > .env
+echo "GROQ_MODEL=llama-3.1-8b-instant" >> .env
+
+# 4. 启动开发环境
 pnpm dev
 
-# 4. 访问应用
+# 5. 访问应用
 # 浏览器打开: http://localhost:5000
 ```
 
 ### 方式二：在线部署（推荐用户）
 
-查看详细的部署指南：
+**🎉 一键部署到 Vercel（免费）**
+
+查看详细部署指南：
+- [⚡ 快速部署指南](QUICK_DEPLOYMENT.md)
 - [📖 完整部署指南](DEPLOYMENT.md)
-- [Vercel 一键部署](https://vercel.com/new)（最简单）
-- [Docker 部署](DEPLOYMENT.md#方案一docker-部署推荐)（推荐）
+- [🎯 开发者模式配置](DEVELOPER_MODE_GUIDE.md)
+
+**最简单的方式：**
+1. 获取 Groq API Key（免费）：https://console.groq.com/keys
+2. 访问 https://vercel.com/new
+3. 导入你的 GitHub 仓库
+4. 添加环境变量：`GROQ_API_KEY=你的_Key`
+5. 点击 Deploy
 
 ### 方式三：下载使用
 

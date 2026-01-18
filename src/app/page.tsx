@@ -1825,16 +1825,29 @@ ${data.story.ending || ''}`;
         body.articleRequirements = articleRequirements;
       }
 
-      // 添加 API Key 和模型配置（如果有）
-      const savedApiKey = localStorage.getItem('siliconflow_api_key');
-      if (savedApiKey) {
-        body.apiKey = savedApiKey;
-        // 添加用户配置的模型参数
+      // 添加 AI 模式和配置信息
+      const aiMode = localStorage.getItem('ai_mode') || 'developer';
+      body.aiMode = aiMode;
+
+      if (aiMode === 'user') {
+        // 用户模式：使用用户配置的 API Key
+        const savedApiKey = localStorage.getItem('siliconflow_api_key');
+        if (savedApiKey) {
+          body.apiKey = savedApiKey;
+          body.modelConfig = {
+            model: localStorage.getItem('siliconflow_model') || 'deepseek-ai/DeepSeek-V3',
+            temperature: parseFloat(localStorage.getItem('siliconflow_temperature') || '0.8'),
+            maxTokens: parseInt(localStorage.getItem('siliconflow_maxTokens') || '2000'),
+            topP: parseFloat(localStorage.getItem('siliconflow_topP') || '0.9'),
+          };
+        }
+      } else {
+        // 开发者模式：使用 Groq 配置
         body.modelConfig = {
-          model: localStorage.getItem('siliconflow_model') || 'deepseek-ai/DeepSeek-V3',
-          temperature: parseFloat(localStorage.getItem('siliconflow_temperature') || '0.8'),
-          maxTokens: parseInt(localStorage.getItem('siliconflow_maxTokens') || '2000'),
-          topP: parseFloat(localStorage.getItem('siliconflow_topP') || '0.9'),
+          model: localStorage.getItem('groq_model') || 'llama-3.1-8b-instant',
+          temperature: parseFloat(localStorage.getItem('groq_temperature') || '0.7'),
+          maxTokens: parseInt(localStorage.getItem('groq_maxTokens') || '4096'),
+          topP: parseFloat(localStorage.getItem('groq_topP') || '1.0'),
         };
       }
 
@@ -4273,7 +4286,10 @@ ${data.story.ending || ''}`;
             onClick={() => setApiKeyDialogOpen(true)}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            大模型配置
+            AI 配置
+            <Badge className="ml-auto bg-green-500 hover:bg-green-600" variant="secondary">
+              免费
+            </Badge>
           </Button>
         </Card>
 
