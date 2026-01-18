@@ -16,6 +16,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -244,6 +252,12 @@ export default function NovelEditor() {
     percentage: 0,
     message: '',
   });
+
+  // 导出对话框状态
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportOption, setExportOption] = useState<'current' | 'all' | 'range'>('current');
+  const [exportStartChapter, setExportStartChapter] = useState<number>(1);
+  const [exportEndChapter, setExportEndChapter] = useState<number>(1);
 
   // 按钮loading状态管理器 - 提供即时反馈
   const [buttonLoading, setButtonLoading] = useState<{[key: string]: boolean}>({});
@@ -1646,15 +1660,67 @@ ${data.story.ending || ''}`;
     alert('章节已保存！');
   };
 
-  // 导出当前章节为 txt 文件
-  const exportChapterToTxt = () => {
-    if (!currentChapter || !currentChapter.content) {
-      alert('没有内容可以导出！');
-      return;
+  // 导出章节为 txt 文件
+  const exportChaptersToTxt = (option: 'current' | 'all' | 'range') => {
+    let chaptersToExport: Chapter[] = [];
+
+    // 根据选项选择要导出的章节
+    if (option === 'current') {
+      if (!currentChapter || !currentChapter.content) {
+        alert('没有内容可以导出！');
+        return;
+      }
+      chaptersToExport = [currentChapter];
+    } else if (option === 'all') {
+      const validChapters = chapters.filter(c => c.content && c.content.trim().length > 0);
+      if (validChapters.length === 0) {
+        alert('没有章节可以导出！');
+        return;
+      }
+      chaptersToExport = validChapters.sort((a, b) => a.order - b.order);
+    } else if (option === 'range') {
+      const validChapters = chapters.filter(c => c.content && c.content.trim().length > 0);
+      const start = exportStartChapter;
+      const end = exportEndChapter;
+
+      // 验证输入
+      if (start < 1 || end < start || start > validChapters.length || end > validChapters.length) {
+        alert(`无效的章节范围！请输入 1 到 ${validChapters.length} 之间的数字，且开始章节不能大于结束章节。`);
+        return;
+      }
+
+      chaptersToExport = validChapters
+        .sort((a, b) => a.order - b.order)
+        .slice(start - 1, end);
     }
 
-    const filename = `${title || '未命名'}_第${currentChapter.order}章_${currentChapter.title || '未命名'}.txt`;
-    const content = `${title || '未命名小说'}\n\n第${currentChapter.order}章：${currentChapter.title || '未命名'}\n\n${currentChapter.content}`;
+    // 构建文件内容
+    let content = '';
+    let filename = '';
+
+    if (chaptersToExport.length === 1) {
+      // 单章节导出
+      const chapter = chaptersToExport[0];
+      filename = `${title || '未命名'}_第${chapter.order}章_${chapter.title || '未命名'}.txt`;
+      content = `${title || '未命名小说'}\n\n第${chapter.order}章：${chapter.title || '未命名'}\n\n${chapter.content}`;
+    } else {
+      // 多章节导出
+      const startChapter = chaptersToExport[0].order;
+      const endChapter = chaptersToExport[chaptersToExport.length - 1].order;
+      filename = `${title || '未命名'}_第${startChapter}-${endChapter}章.txt`;
+
+      content = `${title || '未命名小说'}\n\n`;
+      content += `导出时间：${new Date().toLocaleString()}\n`;
+      content += `共 ${chaptersToExport.length} 章\n`;
+      content += `总计字数：${chaptersToExport.reduce((sum, c) => sum + (c.wordCount || 0), 0)} 字\n\n`;
+      content += '────────────────────────────────────────\n\n';
+
+      chaptersToExport.forEach((chapter) => {
+        content += `第${chapter.order}章：${chapter.title || '未命名'}\n\n`;
+        content += `${chapter.content}\n\n`;
+        content += '────────────────────────────────────────\n\n';
+      });
+    }
 
     // 创建 Blob 对象
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -1673,7 +1739,8 @@ ${data.story.ending || ''}`;
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    alert('章节已导出为 txt 文件！');
+    alert(`已成功导出 ${chaptersToExport.length} 章为 txt 文件！`);
+    setExportDialogOpen(false);
   };
 
   // 自动写作功能
@@ -4925,9 +4992,22 @@ ${data.story.ending || ''}`;
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={exportChapterToTxt}>
+                  <DropdownMenuItem onClick={() => exportChaptersToTxt('current')}>
                     <FileText className="h-4 w-4 mr-2" />
-                    导出当前章节为 TXT
+                    导出当前章节
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportChaptersToTxt('all')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    导出所有章节
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    setExportOption('range');
+                    setExportStartChapter(1);
+                    setExportEndChapter(chapters.filter(c => c.content && c.content.trim().length > 0).length);
+                    setExportDialogOpen(true);
+                  }}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    导出指定范围章节
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -8342,6 +8422,67 @@ ${data.story.ending || ''}`;
 
       {/* 激活弹窗 */}
       {/* 全屏强制验证界面 */}
+
+      {/* 导出章节范围对话框 */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">导出指定范围章节</DialogTitle>
+            <DialogDescription>
+              选择要导出的章节范围
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="startChapter">起始章节</Label>
+              <Input
+                id="startChapter"
+                type="number"
+                min="1"
+                max={chapters.filter(c => c.content && c.content.trim().length > 0).length}
+                value={exportStartChapter}
+                onChange={(e) => setExportStartChapter(parseInt(e.target.value) || 1)}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endChapter">结束章节</Label>
+              <Input
+                id="endChapter"
+                type="number"
+                min="1"
+                max={chapters.filter(c => c.content && c.content.trim().length > 0).length}
+                value={exportEndChapter}
+                onChange={(e) => setExportEndChapter(parseInt(e.target.value) || 1)}
+                className="w-full"
+              />
+            </div>
+            <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                当前共有 <span className="font-bold">{chapters.filter(c => c.content && c.content.trim().length > 0).length}</span> 章已编写内容
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                将导出第 <span className="font-bold">{exportStartChapter}</span> 章到第 <span className="font-bold">{exportEndChapter}</span> 章
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setExportDialogOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => exportChaptersToTxt('range')}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              开始导出
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
