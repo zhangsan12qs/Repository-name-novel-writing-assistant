@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { SecurityUtils, defaultSecurityConfig, SecurityError } from '@/lib/security';
+import { isCozeEnvironment, getCozeFriendlySecurityHeaders } from '@/lib/coze-domain-helper';
 
 // 临时禁用严格的域名验证（用于调试）
 const SKIP_DOMAIN_VALIDATION = true;
@@ -16,14 +17,27 @@ const SKIP_DOMAIN_VALIDATION = true;
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
 
-  // 1. 添加安全响应头
-  const securityHeaders = SecurityUtils.getSecurityHeaders();
+  // 0. 检测是否为 Coze 环境
+  const isCozeEnv = isCozeEnvironment(request);
+
+  // 1. 添加安全响应头（Coze 环境使用特殊配置）
+  let securityHeaders;
+  if (isCozeEnv) {
+    // Coze 环境：使用 Coze 友好的安全头（允许 iframe 嵌入）
+    securityHeaders = getCozeFriendlySecurityHeaders();
+    response.headers.set('X-Coze-Environment', 'true');
+  } else {
+    // 普通环境：使用标准安全头
+    securityHeaders = SecurityUtils.getSecurityHeaders();
+  }
+
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
 
   // 2. 域名白名单验证（仅在严格模式下且未跳过验证时启用）
-  if (defaultSecurityConfig.strictMode && !SKIP_DOMAIN_VALIDATION) {
+  // Coze 环境自动允许访问
+  if (!isCozeEnv && defaultSecurityConfig.strictMode && !SKIP_DOMAIN_VALIDATION) {
     const domain = SecurityUtils.getRequestDomain(request);
     if (!SecurityUtils.isAllowedDomain(domain)) {
       // 返回 403 错误
