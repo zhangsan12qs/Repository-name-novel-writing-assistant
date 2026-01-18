@@ -6594,8 +6594,17 @@ ${data.story.ending || ''}`;
                     <Card key={task.id} className="p-3 border-2">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <h4 className="font-medium text-sm">{task.name}</h4>
+                            <Badge variant="secondary" className="text-[10px]">
+                              {task.type === 'auto-generate-outline' && '自动大纲'}
+                              {task.type === 'batch-generate-chapters' && '批量生成'}
+                              {task.type === 'generate-all' && '一键生成'}
+                              {task.type === 'analyze-book' && '拆书分析'}
+                              {task.type === 'generate-name' && '起名'}
+                              {task.type === 'rewrite-analysis' && '改写分析'}
+                              {task.type === 'custom' && '自定义'}
+                            </Badge>
                             <Badge variant="outline" className={
                               'text-[10px] ' +
                               (task.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' :
@@ -6644,42 +6653,72 @@ ${data.story.ending || ''}`;
                       {/* 操作按钮 */}
                       <div className="flex items-center gap-2">
                         {task.status === 'processing' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handlePauseTask(task.id)}
-                            className="h-7 px-2 text-[10px]"
-                          >
-                            暂停
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handlePauseTask(task.id)}
+                              className="h-7 px-2 text-[10px]"
+                            >
+                              暂停
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="h-7 px-2 text-[10px] text-destructive"
+                            >
+                              取消
+                            </Button>
+                          </>
                         )}
                         {task.status === 'paused' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleResumeTask(task.id)}
-                            className="h-7 px-2 text-[10px]"
-                          >
-                            恢复
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResumeTask(task.id)}
+                              className="h-7 px-2 text-[10px]"
+                            >
+                              恢复
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="h-7 px-2 text-[10px] text-destructive"
+                            >
+                              取消
+                            </Button>
+                          </>
                         )}
                         {task.status === 'completed' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleApplyTaskResult(task.id)}
-                            className="h-7 px-2 text-[10px]"
-                          >
-                            应用结果
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleApplyTaskResult(task.id)}
+                              className="h-7 px-2 text-[10px]"
+                            >
+                              应用结果
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteTask(task.id)}
+                              className="h-7 px-2 text-[10px] text-destructive"
+                            >
+                              删除
+                            </Button>
+                          </>
                         )}
-                        {(task.status === 'completed' || task.status === 'failed' || task.status === 'paused') && (
+                        {task.status === 'failed' && (
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDeleteTask(task.id)}
                             className="h-7 px-2 text-[10px] text-destructive"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            删除
                           </Button>
                         )}
                       </div>
