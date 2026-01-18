@@ -13,7 +13,18 @@ export type TaskStep =
   | 'generating-characters'
   | 'generating-world-settings'
   | 'generating-chapters'
+  | 'analyzing-book'
+  | 'generating-full-outline'
   | 'completed';
+
+export type TaskType = 
+  | 'generate-all'           // 一键生成所有内容
+  | 'batch-generate-chapters' // 批量生成章节
+  | 'auto-generate-outline'   // 自动生成大纲
+  | 'analyze-book'           // 拆书分析
+  | 'generate-name'          // 起名
+  | 'rewrite-analysis'       // 改写分析结果
+  | 'custom';                // 自定义任务
 
 export interface TaskProgress {
   currentStep: TaskStep;
@@ -26,25 +37,26 @@ export interface TaskProgress {
 export interface TaskData {
   id: string;
   name: string;
+  type: TaskType;
   status: TaskStatus;
   progress: TaskProgress;
   createdAt: string;
   updatedAt: string;
-  params: {
-    genre: string;
-    theme: string;
-    protagonist?: string;
-    chapterCount: number;
-  };
+  params: any; // 根据任务类型不同，参数也不同
   result?: {
     outline?: string;
     volumes?: any[];
     characters?: any[];
     worldSettings?: any[];
     chapters?: any[];
+    analysisResult?: any;
+    generatedName?: any;
+    rewrittenData?: any;
+    customData?: any;
   };
   error?: string;
   pausedAt?: string;
+  priority?: number; // 任务优先级，数字越大优先级越高
 }
 
 /**
@@ -62,18 +74,20 @@ class TaskManager {
    * 创建新任务
    */
   createTask(params: {
-    genre: string;
-    theme: string;
-    protagonist?: string;
-    chapterCount: number;
+    type: TaskType;
+    name: string;
+    priority?: number;
+    [key: string]: any;
   }): TaskData {
     const task: TaskData = {
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name: `${params.theme} (${params.chapterCount}章)`,
+      name: params.name,
+      type: params.type,
       status: 'pending',
+      priority: params.priority || 0,
       progress: {
         currentStep: 'initializing',
-        totalChapters: params.chapterCount,
+        totalChapters: params.chapterCount || 0,
         percentage: 0,
         message: '等待开始...'
       },
@@ -98,9 +112,15 @@ class TaskManager {
    * 获取所有任务
    */
   getAllTasks(): TaskData[] {
-    return Array.from(this.tasks.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return Array.from(this.tasks.values())
+      .sort((a, b) => {
+        // 优先按优先级排序（高优先级在前）
+        const priorityDiff = (b.priority || 0) - (a.priority || 0);
+        if (priorityDiff !== 0) return priorityDiff;
+        
+        // 优先级相同时，按创建时间排序（最新的在前）
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
   }
 
   /**
@@ -231,6 +251,8 @@ class TaskManager {
       'generating-characters': 40,
       'generating-world-settings': 50,
       'generating-chapters': 50, // 动态计算
+      'analyzing-book': 30,      // 拆书分析
+      'generating-full-outline': 50, // 自动生成大纲
       'completed': 100,
     };
 
@@ -239,6 +261,14 @@ class TaskManager {
     if (progress.currentStep === 'generating-chapters' && progress.totalChapters > 0) {
       const chapterProgress = (progress.currentChapter || 0) / progress.totalChapters;
       return baseWeight + Math.round(chapterProgress * 50);
+    }
+
+    if (progress.currentStep === 'analyzing-book' && progress.percentage) {
+      return progress.percentage; // 拆书分析有自己的进度计算
+    }
+
+    if (progress.currentStep === 'generating-full-outline' && progress.percentage) {
+      return progress.percentage; // 自动生成大纲有自己的进度计算
     }
 
     return baseWeight;
