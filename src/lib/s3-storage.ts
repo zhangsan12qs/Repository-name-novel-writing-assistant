@@ -1,6 +1,6 @@
 /**
  * S3对象存储工具类
- * 用于存储卡密列表等数据
+ * 用于存储应用数据
  */
 
 import { S3Storage } from "coze-coding-dev-sdk";
