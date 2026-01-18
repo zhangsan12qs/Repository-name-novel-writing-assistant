@@ -166,7 +166,18 @@ export default function NovelEditor() {
   const [outline, setOutline] = useState('');
   const [issues, setIssues] = useState<Issue[]>([]);
   const [worldSettings, setWorldSettings] = useState<WorldSetting[]>([]);
+  // 创作步骤状态
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [activeTab, setActiveTab] = useState<'characters' | 'world' | 'tools' | 'tasks' | 'analysis' | 'analysisResult' | 'import'>('characters');
+
+  // 步骤定义
+  const steps = [
+    { id: 1, name: '准备设定', icon: '📝', color: 'blue', description: '生成大纲、设定人物和世界观' },
+    { id: 2, name: '规划结构', icon: '📚', color: 'purple', description: '设置章节、分卷和批量生成' },
+    { id: 3, name: '内容创作', icon: '✍️', color: 'green', description: '使用AI工具编写章节' },
+    { id: 4, name: '质量检查', icon: '✅', color: 'orange', description: '检查剧情、修复问题' },
+    { id: 5, name: '高级功能', icon: '⚙️', color: 'gray', description: '拆书分析、任务管理等' },
+  ];
 
   // 批量生成章节相关状态
   const [batchChapterGenerating, setBatchChapterGenerating] = useState(false);
@@ -4032,91 +4043,367 @@ ${data.story.ending || ''}`;
   return (
     <div className="flex min-h-screen bg-background">
       {/* 左侧导航栏 */}
-      <div className="w-64 border-r bg-card p-4 overflow-y-auto max-h-screen">
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
+      <div className="w-72 border-r bg-card p-4 overflow-y-auto max-h-screen">
+        {/* 头部 */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <BookOpen className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">小说写作助手</h1>
           </div>
 
-          {/* 数据管理按钮 */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full mb-2 border-blue-600 text-blue-600 hover:bg-blue-50"
-            onClick={() => window.location.href = '/data-manager'}
-          >
-            <Database className="h-4 w-4 mr-2" />
-            数据管理（备份）
-          </Button>
-
-          {/* 性能监控按钮 */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full mb-2 border-orange-600 text-orange-600 hover:bg-orange-50"
-            onClick={() => window.location.href = '/performance-monitor'}
-          >
-            <Activity className="h-4 w-4 mr-2" />
-            性能监控
-          </Button>
-
-          {/* 网络诊断按钮 */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full mb-2 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-            onClick={() => window.location.href = '/network-diagnostics'}
-          >
-            <Network className="h-4 w-4 mr-2" />
-            网络诊断
-          </Button>
-
-          {/* 感谢作者按钮 */}
-          <ThankAuthorButton />
-
-          {/* 自动生成大纲按钮 */}
-          <AutoOutlineDialog onGenerateComplete={handleAutoOutlineComplete} />
-
-
+          {/* 小说标题 */}
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="小说标题"
             className="mb-2"
           />
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => setShowGenerateAll(!showGenerateAll)}
-            disabled={generating}
-          >
-            {generating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                一键自动生成
-              </>
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="w-full mt-2 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-            onClick={handleClearData}
-            disabled={generating}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            清除所有数据
-          </Button>
         </div>
 
-        {/* 一键生成面板 */}
-        {showGenerateAll && !generating && (
+        {/* 创作步骤导航 */}
+        <div className="mb-4">
+          <div className="text-xs font-medium text-muted-foreground mb-2">创作流程指引</div>
+          <div className="space-y-1">
+            {steps.map((step) => {
+              const isActive = currentStep === step.id;
+              const isCompleted = currentStep > step.id;
+              const colorClasses = {
+                blue: {
+                  bg: isActive ? 'bg-blue-500' : isCompleted ? 'bg-blue-500' : 'bg-blue-100 dark:bg-blue-900',
+                  text: isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-blue-700 dark:text-blue-300',
+                  border: isActive ? 'border-blue-500' : isCompleted ? 'border-blue-500' : 'border-blue-200 dark:border-blue-800',
+                },
+                purple: {
+                  bg: isActive ? 'bg-purple-500' : isCompleted ? 'bg-purple-500' : 'bg-purple-100 dark:bg-purple-900',
+                  text: isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-purple-700 dark:text-purple-300',
+                  border: isActive ? 'border-purple-500' : isCompleted ? 'border-purple-500' : 'border-purple-200 dark:border-purple-800',
+                },
+                green: {
+                  bg: isActive ? 'bg-green-500' : isCompleted ? 'bg-green-500' : 'bg-green-100 dark:bg-green-900',
+                  text: isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-green-700 dark:text-green-300',
+                  border: isActive ? 'border-green-500' : isCompleted ? 'border-green-500' : 'border-green-200 dark:border-green-800',
+                },
+                orange: {
+                  bg: isActive ? 'bg-orange-500' : isCompleted ? 'bg-orange-500' : 'bg-orange-100 dark:bg-orange-900',
+                  text: isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-orange-700 dark:text-orange-300',
+                  border: isActive ? 'border-orange-500' : isCompleted ? 'border-orange-500' : 'border-orange-200 dark:border-orange-800',
+                },
+                gray: {
+                  bg: isActive ? 'bg-gray-500' : isCompleted ? 'bg-gray-500' : 'bg-gray-100 dark:bg-gray-900',
+                  text: isActive ? 'text-white' : isCompleted ? 'text-white' : 'text-gray-700 dark:text-gray-300',
+                  border: isActive ? 'border-gray-500' : isCompleted ? 'border-gray-500' : 'border-gray-200 dark:border-gray-800',
+                },
+              };
+              const colors = colorClasses[step.color as keyof typeof colorClasses];
+
+              return (
+                <div
+                  key={step.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md ${colors.bg} ${colors.border}`}
+                  onClick={() => setCurrentStep(step.id as 1 | 2 | 3 | 4 | 5)}
+                >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${colors.text} ${isActive ? 'ring-2 ring-white' : ''}`}>
+                    {isCompleted ? '✓' : step.icon}
+                  </div>
+                  <div className={`flex-1 ${colors.text}`}>
+                    <div className="text-sm font-medium">{step.name}</div>
+                    <div className="text-[10px] opacity-80">{step.description}</div>
+                  </div>
+                  {isActive && (
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 阶段1：准备设定 */}
+        {currentStep === 1 && (
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
+              <div className="w-1 h-4 bg-blue-500 rounded" />
+              阶段1：准备设定
+            </div>
+
+            {/* 自动生成大纲 */}
+            <AutoOutlineDialog onGenerateComplete={handleAutoOutlineComplete} />
+
+            {/* 一键自动生成 */}
+            <Button
+              size="sm"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:from-blue-600 hover:to-purple-600"
+              onClick={() => setShowGenerateAll(!showGenerateAll)}
+              disabled={generating}
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  一键自动生成
+                </>
+              )}
+            </Button>
+
+            {/* 核心写作规则 */}
+            <Card className="p-2 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
+              <div className="text-xs font-medium mb-1 text-red-700 dark:text-red-300 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                核心写作规则
+              </div>
+              <div className="text-[10px] text-red-600 dark:text-red-400 space-y-0.5">
+                <div className="font-bold">🚫 禁止感情线/成长线作为主线</div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* 阶段2：规划结构 */}
+        {currentStep === 2 && (
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-purple-700 dark:text-purple-300 flex items-center gap-1">
+              <div className="w-1 h-4 bg-purple-500 rounded" />
+              阶段2：规划结构
+            </div>
+
+            {/* 章节设置 */}
+            <Card className="p-2 bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800">
+              <div className="text-xs font-medium mb-1 text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                <Settings className="h-3 w-3" />
+                章节设置
+              </div>
+              <div className="space-y-1">
+                <div>
+                  <Label className="text-[10px] text-purple-600 dark:text-purple-400">目标章节数</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={chapterSettings.targetChapterCount}
+                    onChange={(e) => setChapterSettings({ ...chapterSettings, targetChapterCount: parseInt(e.target.value) || 1 })}
+                    className="h-6 text-xs"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-purple-600 dark:text-purple-400">每章字数要求</Label>
+                  <Input
+                    type="number"
+                    min="100"
+                    max="10000"
+                    step="100"
+                    value={chapterSettings.targetWordCountPerChapter}
+                    onChange={(e) => setChapterSettings({ ...chapterSettings, targetWordCountPerChapter: parseInt(e.target.value) || 1000 })}
+                    className="h-6 text-xs"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* 批量生成章节按钮 */}
+            <Button
+              size="sm"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600"
+              onClick={() => setActiveTab('tools')}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              批量生成章节
+            </Button>
+          </div>
+        )}
+
+        {/* 阶段3：内容创作 */}
+        {currentStep === 3 && (
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-green-700 dark:text-green-300 flex items-center gap-1">
+              <div className="w-1 h-4 bg-green-500 rounded" />
+              阶段3：内容创作
+            </div>
+
+            {/* 写作反馈与调整 */}
+            <Card className="p-2 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+              <div className="text-xs font-medium mb-1 text-green-700 dark:text-green-300 flex items-center gap-1">
+                <Edit className="h-3 w-3" />
+                写作反馈
+              </div>
+              <Textarea
+                value={feedbackSettings.dissatisfactionReason}
+                onChange={(e) => setFeedbackSettings({ ...feedbackSettings, dissatisfactionReason: e.target.value })}
+                placeholder="哪里不满意？"
+                className="min-h-[60px] resize-none text-xs"
+              />
+            </Card>
+
+            {/* 文章目的需求 */}
+            <Card className="p-2 bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+              <div className="text-xs font-medium mb-1 text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                写作需求
+              </div>
+              <Textarea
+                value={articleRequirements.purpose}
+                onChange={(e) => setArticleRequirements({ ...articleRequirements, purpose: e.target.value })}
+                placeholder="本章目的、风格、内容调整..."
+                className="min-h-[60px] resize-none text-xs"
+              />
+            </Card>
+
+            <Button
+              size="sm"
+              onClick={handleDirectEdit}
+              disabled={aiLoading}
+              className="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white border-0 hover:from-green-600 hover:to-teal-600"
+            >
+              {aiLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4 mr-2" />
+              )}
+              立即更改当前内容
+            </Button>
+          </div>
+        )}
+
+        {/* 阶段4：质量检查 */}
+        {currentStep === 4 && (
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-orange-700 dark:text-orange-300 flex items-center gap-1">
+              <div className="w-1 h-4 bg-orange-500 rounded" />
+              阶段4：质量检查
+            </div>
+
+            {/* 问题检查 */}
+            <Card className="p-2 bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800">
+              <div className="text-xs font-medium mb-1 text-orange-700 dark:text-orange-300 flex items-center gap-1">
+                <CheckCircle className="h-3 w-3" />
+                问题检查
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                {issues.filter(i => i.type === 'error').length > 0 && (
+                  <span className="text-destructive">{issues.filter(i => i.type === 'error').length} 错误</span>
+                )}
+                {issues.filter(i => i.type === 'warning').length > 0 && (
+                  <span className="text-yellow-600">{issues.filter(i => i.type === 'warning').length} 警告</span>
+                )}
+                {issues.length === 0 && (
+                  <span className="text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    无问题
+                  </span>
+                )}
+              </div>
+            </Card>
+
+            {/* 剧情检查按钮 */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCheckPlot}
+              disabled={checkingPlot || validChapterCount === 0}
+              className="w-full border-orange-600 text-orange-600 hover:bg-orange-50"
+            >
+              {checkingPlot ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  检查中...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  剧情检查
+                </>
+              )}
+            </Button>
+
+            {/* AI写作弊端禁忌 */}
+            <Card className="p-2 bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800">
+              <div className="text-[10px] text-orange-600 dark:text-orange-400">
+                <div className="font-bold mb-1">❌ 禁止：华美空洞、逻辑bug、流水账、套路化</div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* 阶段5：高级功能 */}
+        {currentStep === 5 && (
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+              <div className="w-1 h-4 bg-gray-500 rounded" />
+              阶段5：高级功能
+            </div>
+
+            {/* 数据管理 */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+              onClick={() => window.location.href = '/data-manager'}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              数据管理
+            </Button>
+
+            {/* 性能监控 */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-orange-600 text-orange-600 hover:bg-orange-50"
+              onClick={() => window.location.href = '/performance-monitor'}
+            >
+              <Activity className="h-4 w-4 mr-2" />
+              性能监控
+            </Button>
+
+            {/* 网络诊断 */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+              onClick={() => window.location.href = '/network-diagnostics'}
+            >
+              <Network className="h-4 w-4 mr-2" />
+              网络诊断
+            </Button>
+
+            {/* 感谢作者 */}
+            <ThankAuthorButton />
+
+            {/* 清除所有数据 */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+              onClick={handleClearData}
+              disabled={generating}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              清除所有数据
+            </Button>
+          </div>
+        )}
+
+        {/* 分隔线 */}
+        <div className="border-t my-3" />
+
+        {/* 章节列表（所有阶段都显示） */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-sm font-medium">分卷与章节</Label>
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={() => setShowVolumeManager(!showVolumeManager)}>
+                <BookMarked className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={addChapter} disabled={buttonLoading['add-chapter']}>
+                {buttonLoading['add-chapter'] ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* 分卷管理面板 */}
+          {showVolumeManager && (
           <Card className="p-3 mb-4 bg-primary/5 border-primary/20">
             <div className="space-y-2">
               <div>
@@ -4557,83 +4844,7 @@ ${data.story.ending || ''}`;
           </div>
         </div>
 
-        {/* 写作规则提示 */}
-        <Card className="p-3 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
-          <div className="text-sm font-medium mb-2 text-red-700 dark:text-red-300 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            核心写作规则
-          </div>
-          <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-            <div className="font-bold">🚫 全文禁止以感情线作为主线</div>
-            <div>• 故事核心驱动力：使命任务、世界观冲突、事业追求、家族责任</div>
-            <div>• 感情戏仅作为辅助，不成为主要推动力</div>
-            <div>• 主角目标、冲突、事件都围绕非感情主题展开</div>
-            <div className="font-bold mt-2">🚫 全文禁止以主角个人成长作为核心主线</div>
-            <div>• 主角变强、升级仅作为完成外部使命的工具和手段</div>
-            <div>• 故事核心驱动力：拯救世界、复仇、守护重要事物、探索未知等外部使命</div>
-            <div>• 主角的目标是为了完成使命，而非为了变强而变强</div>
-          </div>
-        </Card>
-
-        {/* AI写作弊端禁忌 */}
-        <Card className="p-3 bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800">
-          <div className="text-sm font-medium mb-2 text-orange-700 dark:text-orange-300 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            AI写作弊端禁忌（编辑拒稿主要原因）
-          </div>
-          <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-            <div className="font-bold">❌ 禁止出现的问题：</div>
-            <div>• 华美的空洞：形容词{'>'}3个/句，内容空洞</div>
-            <div>• 逻辑bug：人设矛盾、前后不一致、情节不合理</div>
-            <div>• 破坏节奏：过度描写破坏紧张氛围</div>
-            <div>• 不推剧情：只写环境描写，缺乏情节推进</div>
-            <div>• 内容注水：大量无意义描写</div>
-            <div>• 人物扁平：角色像工具人，缺乏动机</div>
-            <div>• 对话平淡：对话像念白，无张力</div>
-            <div>• 流水账：连接词过多（然后/接着/之后/于是）</div>
-            <div>• 套路化：三角恋、退婚、打脸、无敌等俗套</div>
-          </div>
-        </Card>
-
-        {/* 写作顺序建议 */}
-        <Card className="p-3 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-          <div className="text-sm font-medium mb-2 text-blue-700 dark:text-blue-300">写作顺序建议</div>
-          <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-            <div>1️⃣ 先用AI生成大纲</div>
-            <div>2️⃣ 再生成角色设定</div>
-            <div>3️⃣ 设置世界观设定</div>
-            <div>4️⃣ 创建分卷结构</div>
-            <div>5️⃣ 开始编写章节内容</div>
-          </div>
-        </Card>
-
-        {/* 问题检查 */}
-        <Card className="p-3 bg-muted/50">
-          <div className="text-sm font-medium mb-2">问题检查</div>
-          <div className="flex items-center gap-2 text-xs">
-            {issues.filter(i => i.type === 'error').length > 0 && (
-              <span className="text-destructive">
-                {issues.filter(i => i.type === 'error').length} 错误
-              </span>
-            )}
-            {issues.filter(i => i.type === 'warning').length > 0 && (
-              <span className="text-yellow-600">
-                {issues.filter(i => i.type === 'warning').length} 警告
-              </span>
-            )}
-            {issues.filter(i => i.type === 'info').length > 0 && (
-              <span className="text-blue-600">
-                {issues.filter(i => i.type === 'info').length} 提示
-              </span>
-            )}
-            {issues.length === 0 && (
-              <span className="text-green-600 flex items-center gap-1">
-                <CheckCircle className="h-3 w-3" />
-                无问题
-              </span>
-            )}
-          </div>
-        </Card>
+        </div>
       </div>
 
       {/* 主编辑区域 */}
