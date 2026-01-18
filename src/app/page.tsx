@@ -3981,34 +3981,6 @@ export default function NovelEditor() {
             网络诊断
           </Button>
 
-          {/* 激活状态显示 */}
-          <Card className="p-3 mb-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle className={`h-4 w-4 ${activationStatus.isActive ? 'text-green-600' : 'text-orange-600'}`} />
-                <span className="text-xs font-medium">
-                  {activationStatus.isActive ? '已激活' : '未激活'}
-                </span>
-              </div>
-              {activationStatus.isActive && (
-                <Badge variant="outline" className="text-xs bg-white dark:bg-gray-800">
-                  {activationStatus.featureLevel === 'basic' ? '基础版' : activationStatus.featureLevel === 'pro' ? '专业版' : '企业版'}
-                </Badge>
-              )}
-            </div>
-            {activationStatus.isActive && (
-              <div className="text-xs text-muted-foreground mb-2">
-                剩余 {activationStatus.daysLeft} 天
-              </div>
-            )}
-            <Button
-              size="sm"
-              className="w-full h-8 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0"
-              onClick={() => setShowActivationModal(true)}
-            >
-              {activationStatus.isActive ? '续费激活' : '激活卡密'}
-            </Button>
-          </Card>
 
           <Input
             value={title}
