@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { getAiConfig, normalizeMessages, createStreamResponse, extractAiConfigFromRequest } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, instructions, articleRequirements } = await request.json();
+    const body = await request.json();
+    const { content, instructions, articleRequirements } = body;
 
     if (!content) {
       return NextResponse.json(
@@ -12,11 +13,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    // 提取 AI 配置
+    const requestConfig = await extractAiConfigFromRequest(request);
+    const config = getAiConfig(requestConfig.apiKey, requestConfig.modelConfig);
 
     const systemPrompt = `你是一位专业的网络小说写作助手。你的任务是：
 1. 基于给定的段落，进行扩展和丰富
@@ -56,40 +55,12 @@ ${instructions ? `\n特殊要求：${instructions}` : ''}`;
       }
     }
 
-    const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      {
-        role: 'user' as const,
-        content: userContent,
-      },
-    ];
+    const messages = normalizeMessages([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent },
+    ]);
 
-    const stream = client.stream(messages, {
-      temperature: 0.7,
-    });
-
-    const encoder = new TextEncoder();
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of stream) {
-            if (chunk.content) {
-              controller.enqueue(encoder.encode(chunk.content.toString()));
-            }
-          }
-          controller.close();
-        } catch (error) {
-          controller.error(error);
-        }
-      },
-    });
-
-    return new NextResponse(readableStream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Transfer-Encoding': 'chunked',
-      },
-    });
+    return createStreamResponse(messages, config);
   } catch (error) {
     console.error('AI扩写错误:', error);
     return NextResponse.json(
