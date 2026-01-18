@@ -20,60 +20,65 @@ export interface GroqStreamOptions {
 
 /**
  * Groq 支持的免费模型
+ * 按性能和适合度排序，最强优先
  */
 export const GROQ_MODELS = {
-  // Llama 3.1 系列（推荐）
-  'llama-3.1-8b-instant': {
-    name: 'Llama 3.1 8B',
-    description: 'Meta 最新的开源模型，速度快，质量好',
-    category: '推荐',
-    speed: '极快',
-    context: 128000,
-  },
+  // 🌟 旗舰模型（最推荐，适合长篇创作）
   'llama-3.1-70b-versatile': {
     name: 'Llama 3.1 70B',
-    description: 'Meta 70B 参数大模型，性能卓越',
-    category: '高性能',
+    description: 'Meta 旗舰模型，70B参数+128k上下文，长篇创作首选',
+    category: '旗舰推荐',
     speed: '快速',
     context: 128000,
   },
 
-  // Llama 3 系列
-  'llama3-8b-8192': {
-    name: 'Llama 3 8B',
-    description: 'Meta 开源模型，速度快',
-    category: '经典',
-    speed: '极快',
-    context: 8192,
-  },
+  // 高性能模型
   'llama3-70b-8192': {
     name: 'Llama 3 70B',
-    description: 'Meta 大模型，性能强',
+    description: 'Meta 经典大模型，性能强劲',
     category: '高性能',
     speed: '快速',
     context: 8192,
   },
 
-  // Mixtral 系列
+  // 平衡模型（速度与质量兼顾）
   'mixtral-8x7b-32768': {
     name: 'Mixtral 8x7B',
-    description: 'Mistral AI 的混合专家模型',
+    description: '混合专家架构，32k上下文，性价比极高',
     category: '性价比',
     speed: '快速',
     context: 32768,
   },
 
-  // Gemma 系列
-  'gemma-7b-it': {
-    name: 'Gemma 7B',
-    description: 'Google 轻量级模型，快速响应',
+  // 轻量模型（极速响应）
+  'llama-3.1-8b-instant': {
+    name: 'Llama 3.1 8B',
+    description: 'Meta 最新8B模型，速度最快，128k上下文',
+    category: '极速',
+    speed: '极快',
+    context: 128000,
+  },
+
+  // 经典模型
+  'llama3-8b-8192': {
+    name: 'Llama 3 8B',
+    description: 'Meta 开源模型，速度快，质量稳定',
+    category: '经典',
+    speed: '极快',
+    context: 8192,
+  },
+
+  // Google 模型
+  'gemma2-9b-it': {
+    name: 'Gemma 2 9B',
+    description: 'Google 最新轻量模型，性能提升',
     category: '轻量',
     speed: '极快',
     context: 8192,
   },
-  'gemma2-9b-it': {
-    name: 'Gemma 2 9B',
-    description: 'Google 最新模型，性能提升',
+  'gemma-7b-it': {
+    name: 'Gemma 7B',
+    description: 'Google 轻量级模型，快速响应',
     category: '轻量',
     speed: '极快',
     context: 8192,

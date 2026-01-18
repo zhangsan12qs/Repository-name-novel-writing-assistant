@@ -56,7 +56,8 @@ export function getDeveloperModel(): string {
     return process.env.GROQ_MODEL;
   }
 
-  // 默认使用 Llama 3.1 70B（适合长篇生成，128k上下文）
+  // 默认使用 Llama 3.1 70B（最强旗舰模型，适合长篇生成）
+  // 70B参数 + 128k上下文 = 最适合长篇小说创作
   return 'llama-3.1-70b-versatile';
 }
 

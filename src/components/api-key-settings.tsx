@@ -118,10 +118,10 @@ const DEFAULT_USER_CONFIG = {
 };
 
 const DEFAULT_DEVELOPER_CONFIG = {
-  model: 'llama-3.1-70b-versatile',  // 70B参数，128k上下文，适合长篇（1000章+）
-  temperature: 0.75,  // 适中的随机性
-  maxTokens: 8192,  // 增加到8192，利用大上下文
-  topP: 1.0
+  model: 'llama-3.1-70b-versatile',  // 旗舰模型：70B参数+128k上下文，最强长篇能力
+  temperature: 0.75,  // 适中的随机性，保持创意和连贯性
+  maxTokens: 8192,    // 充分利用大上下文，每次生成更多内容
+  topP: 1.0           // 全范围采样，提高多样性
 };
 
 export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsProps) {
@@ -261,7 +261,7 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
             <Card
               className={`flex-1 p-6 cursor-pointer transition-all ${
                 aiMode === 'developer'
-                  ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950'
+                  ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-950 shadow-lg'
                   : 'hover:ring-2 hover:ring-purple-300'
               }`}
               onClick={() => handleModeChange('developer')}
@@ -272,13 +272,13 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">jm666直连配置</h3>
-                  <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
-                    已预配置
+                  <Badge variant="outline" className="bg-gradient-to-r from-purple-100 to-green-100 dark:from-purple-900 dark:to-green-900 text-purple-700 dark:text-purple-300">
+                    ⭐ 旗舰推荐
                   </Badge>
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                已预置高性能 AI（Llama 3.1 70B，128k上下文），无需 API Key，点开即用，支持 1000 章超长篇创作
+                已预置最强 AI（Llama 3.1 70B，128k上下文），支持 1000 章超长篇创作，点开即用
               </p>
               <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-2">
@@ -287,7 +287,7 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-yellow-500" />
-                  <span>极速响应（比 GPT-4 快 10 倍）</span>
+                  <span>70B 旗舰模型，推理能力极强</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-purple-500" />
@@ -345,13 +345,16 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
 
           {/* 开发者模式配置 */}
           <TabsContent value="developer" className="space-y-6 mt-4">
-            <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <Alert className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 dark:border-green-800">
+              <Sparkles className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertDescription className="text-green-800 dark:text-green-200">
-                <strong>✅ 已预配置，可直接使用</strong>：jm666直连配置已经为你准备好了高性能 AI，
-                无需任何 API Key，点击"续写"、"扩写"等按钮即可开始创作。
+                <strong>✅ 已预置最强 AI，直接可用</strong>：jm666直连配置已为你选好了最适合长篇小说的<strong>旗舰模型</strong>。
                 <br/>
-                <strong>📚 当前配置：</strong>Llama 3.1 70B（128k上下文），适合 1000 章超长篇小说生成。
+                <strong>🏆 当前配置：</strong>Llama 3.1 70B（Meta 旗舰，70B参数，128k上下文）
+                <br/>
+                <strong>📚 性能：</strong>支持 1000 章超长篇，能记住约 40 章内容，推理能力极强
+                <br/>
+                <strong>🆓 费用：</strong>完全免费，无需任何 API Key
               </AlertDescription>
             </Alert>
 
@@ -359,44 +362,62 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
               <div>
                 <Label className="text-base font-semibold mb-3 block">选择模型</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.entries(GROQ_MODELS).map(([id, info]) => (
-                    <Card
-                      key={id}
-                      className={`p-4 cursor-pointer transition-all border-2 ${
-                        devModel === id
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-950'
-                          : 'border-gray-200 dark:border-gray-800 hover:border-purple-300'
-                      }`}
-                      onClick={() => setDevModel(id)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-sm">{info.name}</h4>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${
-                            info.category === '推荐'
-                              ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
-                              : info.category === '高性能'
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                              : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
-                          }`}
-                        >
-                          {info.category}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{info.description}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Zap className="h-3 w-3" />
-                          {info.speed}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Cpu className="h-3 w-3" />
-                          {info.context / 1000}k
-                        </span>
-                      </div>
-                    </Card>
-                  ))}
+                  {Object.entries(GROQ_MODELS).map(([id, info]) => {
+                    const isFlagship = info.category === '旗舰推荐';
+                    return (
+                      <Card
+                        key={id}
+                        className={`p-4 cursor-pointer transition-all border-2 ${
+                          devModel === id
+                            ? isFlagship
+                              ? 'border-purple-600 bg-purple-100 dark:bg-purple-900 ring-2 ring-purple-400'
+                              : 'border-purple-500 bg-purple-50 dark:bg-purple-950'
+                            : isFlagship
+                            ? 'border-purple-300 bg-purple-50/50 dark:bg-purple-950/50 hover:border-purple-500 hover:ring-2 hover:ring-purple-400'
+                            : 'border-gray-200 dark:border-gray-800 hover:border-purple-300'
+                        }`}
+                        onClick={() => setDevModel(id)}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {isFlagship && <Star className="h-4 w-4 text-purple-600 dark:text-purple-400 fill-purple-600" />}
+                            <h4 className="font-semibold text-sm">{info.name}</h4>
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              isFlagship
+                                ? 'bg-purple-600 text-white dark:bg-purple-500'
+                                : info.category === '高性能'
+                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                                : info.category === '性价比'
+                                ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                                : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {info.category}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{info.description}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            {info.speed}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Cpu className="h-3 w-3" />
+                            {info.context / 1000}k
+                          </span>
+                          {isFlagship && (
+                            <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
+                              <Sparkles className="h-3 w-3" />
+                              长篇首选
+                            </span>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
 
