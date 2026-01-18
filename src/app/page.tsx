@@ -16,6 +16,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   BookOpen,
   Users,
   ListTodo,
@@ -39,7 +45,8 @@ import {
   Activity,
   Network,
   Wrench,
-  XCircle
+  XCircle,
+  Download
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
@@ -1637,6 +1644,36 @@ ${data.story.ending || ''}`;
     if (!currentChapter) return;
     setChapters(chapters.map(c => c.id === currentChapter?.id ? currentChapter : c));
     alert('章节已保存！');
+  };
+
+  // 导出当前章节为 txt 文件
+  const exportChapterToTxt = () => {
+    if (!currentChapter || !currentChapter.content) {
+      alert('没有内容可以导出！');
+      return;
+    }
+
+    const filename = `${title || '未命名'}_第${currentChapter.order}章_${currentChapter.title || '未命名'}.txt`;
+    const content = `${title || '未命名小说'}\n\n第${currentChapter.order}章：${currentChapter.title || '未命名'}\n\n${currentChapter.content}`;
+
+    // 创建 Blob 对象
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+
+    // 创建下载链接
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    alert('章节已导出为 txt 文件！');
   };
 
   // 自动写作功能
@@ -4880,6 +4917,20 @@ ${data.story.ending || ''}`;
                 <Save className="h-4 w-4 mr-2" />
                 保存
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    导出
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={exportChapterToTxt}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    导出当前章节为 TXT
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
 
