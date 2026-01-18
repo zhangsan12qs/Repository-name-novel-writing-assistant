@@ -47,51 +47,80 @@ type AiMode = 'developer' | 'user';
 
 // 用户模式支持的模型（硅基流动）
 const USER_MODELS = [
+  // 适合长篇的顶级模型
+  {
+    id: 'Qwen/Qwen2.5-72B-Instruct',
+    name: 'Qwen2.5-72B',
+    description: '72B参数，32k上下文，顶级长篇能力',
+    category: '长篇旗舰'
+  },
   {
     id: 'deepseek-ai/DeepSeek-V3',
     name: 'DeepSeek-V3',
-    description: 'DeepSeek 最新旗舰模型，性能卓越',
-    category: '推荐'
+    description: '最新旗舰，64k上下文，推理能力极强',
+    category: '长篇旗舰'
   },
+  {
+    id: 'Yi/Yi-1.5-34B-Chat',
+    name: 'Yi-1.5-34B',
+    description: '64k上下文，优秀中文创作能力',
+    category: '长篇推荐'
+  },
+  {
+    id: 'Qwen/Qwen2.5-32B-Instruct',
+    name: 'Qwen2.5-32B',
+    description: '32k上下文，性能平衡，性价比高',
+    category: '长篇推荐'
+  },
+
+  // 性价比模型
   {
     id: 'deepseek-ai/DeepSeek-V2.5',
     name: 'DeepSeek-V2.5',
-    description: '性能均衡，成本更低',
+    description: '32k上下文，成本更低',
     category: '性价比'
   },
   {
+    id: 'Qwen/Qwen2.5-14B-Instruct',
+    name: 'Qwen2.5-14B',
+    description: '32k上下文，轻量级长篇',
+    category: '性价比'
+  },
+
+  // 其他优秀模型
+  {
     id: 'Qwen/Qwen2.5-7B-Instruct',
     name: 'Qwen2.5-7B',
-    description: '阿里通义千问，中文能力强',
+    description: '阿里通义千问，32k上下文，中文能力强',
     category: '中文优化'
   },
   {
     id: 'meta-llama/Llama-3.1-8B-Instruct',
     name: 'Llama-3.1-8B',
-    description: 'Meta 开源模型，多语言支持',
+    description: 'Meta开源，128k上下文，多语言支持',
     category: '开源'
   },
   {
-    id: 'Qwen/Qwen2.5-72B-Instruct',
-    name: 'Qwen2.5-72B',
-    description: '72B 参数，顶级性能',
-    category: '高性能'
+    id: 'google/gemma-2-27b-it',
+    name: 'Gemma 2 27B',
+    description: 'Google最新，8k上下文，轻量高效',
+    category: '轻量'
   }
 ];
 
 // 默认配置
 const DEFAULT_USER_CONFIG = {
   apiKey: '',
-  model: 'deepseek-ai/DeepSeek-V3',
+  model: 'Qwen/Qwen2.5-72B-Instruct',  // 72B参数，32k上下文，适合长篇
   temperature: 0.8,
-  maxTokens: 2000,
+  maxTokens: 4000,  // 增加到4000，支持更长输出
   topP: 0.9
 };
 
 const DEFAULT_DEVELOPER_CONFIG = {
-  model: 'llama-3.1-8b-instant',
+  model: 'llama-3.1-70b-versatile',  // 70B参数，128k上下文，适合长篇
   temperature: 0.7,
-  maxTokens: 4096,
+  maxTokens: 8192,  // 增加到8192，利用大上下文
   topP: 1.0
 };
 
@@ -319,8 +348,9 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
             <Alert className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
               <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               <AlertDescription className="text-purple-800 dark:text-purple-200">
-                <strong>免费使用 Groq AI</strong>：无需配置，直接使用预置的 Llama 3.1 8B 模型。
-                由 Groq 提供的高速推理服务，速度极快且完全免费。
+                <strong>免费使用 Groq AI</strong>：无需配置，直接使用预置模型。
+                <strong>长篇生成推荐：</strong>Llama 3.1 70B（128k上下文）或 Mixtral 8x7B（32k上下文），
+                能记住更多情节和人物，适合生成长篇小说。速度极快且完全免费。
               </AlertDescription>
             </Alert>
 
@@ -482,6 +512,12 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
               {/* 模型选择 */}
               <div>
                 <Label className="text-base font-semibold mb-3 block">选择模型</Label>
+                <Alert className="mb-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200 text-xs">
+                    <strong>长篇生成建议</strong>：选择"长篇旗舰"或"长篇推荐"类别的模型，它们具有更大的上下文窗口（32k-64k），能记住更多情节和人物，适合生成长篇小说。
+                  </AlertDescription>
+                </Alert>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {USER_MODELS.map((model) => (
                     <Card
@@ -498,17 +534,27 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
                         <Badge
                           variant="outline"
                           className={`text-xs ${
-                            model.category === '推荐'
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                              : model.category === '高性能'
+                            model.category === '长篇旗舰'
                               ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                              : model.category === '长篇推荐'
+                              ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                              : model.category === '高性能'
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                              : model.category === '性价比'
+                              ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
                               : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
                           }`}
                         >
                           {model.category}
                         </Badge>
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{model.description}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{model.description}</p>
+                      {model.category === '长篇旗舰' || model.category === '长篇推荐' ? (
+                        <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                          <Sparkles className="h-3 w-3" />
+                          适合长篇生成
+                        </div>
+                      ) : null}
                     </Card>
                   ))}
                 </div>
