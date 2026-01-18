@@ -18,10 +18,16 @@ export default function ErrorPage({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error?: Error & { digest?: string };
+  reset?: () => void;
 }) {
   const [showDetails, setShowDetails] = useState(false);
+
+  // 安全访问 error 属性
+  const errorName = error?.name || 'Unknown Error';
+  const errorMessage = error?.message || 'An unknown error occurred';
+  const errorDigest = error?.digest;
+  const errorStack = error?.stack;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-900 via-slate-900 to-slate-900 p-8 flex items-center justify-center">
@@ -45,11 +51,11 @@ export default function ErrorPage({
         <Alert className="border-red-500 bg-red-500/10">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <div className="font-bold">{error.name}</div>
-            <div className="text-sm mt-1">{error.message}</div>
-            {error.digest && (
+            <div className="font-bold">{errorName}</div>
+            <div className="text-sm mt-1">{errorMessage}</div>
+            {errorDigest && (
               <div className="text-xs text-slate-400 mt-2">
-                错误ID: {error.digest}
+                错误ID: {errorDigest}
               </div>
             )}
           </AlertDescription>
@@ -60,7 +66,7 @@ export default function ErrorPage({
           <h2 className="text-xl font-semibold text-white mb-4">快速解决方案</h2>
           <div className="space-y-3">
             <Button
-              onClick={reset}
+              onClick={() => reset?.()}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -118,17 +124,17 @@ export default function ErrorPage({
             <div className="space-y-3">
               <div className="p-3 bg-slate-900/50 rounded-lg">
                 <div className="text-sm text-slate-400 mb-1">错误名称</div>
-                <div className="text-white font-mono">{error.name}</div>
+                <div className="text-white font-mono">{errorName}</div>
               </div>
               <div className="p-3 bg-slate-900/50 rounded-lg">
                 <div className="text-sm text-slate-400 mb-1">错误消息</div>
-                <div className="text-white font-mono">{error.message}</div>
+                <div className="text-white font-mono">{errorMessage}</div>
               </div>
-              {error.stack && (
+              {errorStack && (
                 <div className="p-3 bg-slate-900/50 rounded-lg">
                   <div className="text-sm text-slate-400 mb-1">堆栈跟踪</div>
                   <pre className="text-xs text-slate-300 font-mono overflow-x-auto">
-                    {error.stack}
+                    {errorStack}
                   </pre>
                 </div>
               )}
