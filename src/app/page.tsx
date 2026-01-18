@@ -6633,44 +6633,24 @@ ${data.story.ending || ''}`;
                       {/* 操作按钮 */}
                       <div className="flex items-center gap-2">
                         {task.status === 'processing' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handlePauseTask(task.id)}
-                              className="h-7 px-2 text-[10px]"
-                            >
-                              暂停
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="h-7 px-2 text-[10px] text-destructive"
-                            >
-                              取消
-                            </Button>
-                          </>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePauseTask(task.id)}
+                            className="h-7 px-2 text-[10px]"
+                          >
+                            暂停
+                          </Button>
                         )}
                         {task.status === 'paused' && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleResumeTask(task.id)}
-                              className="h-7 px-2 text-[10px]"
-                            >
-                              恢复
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="h-7 px-2 text-[10px] text-destructive"
-                            >
-                              取消
-                            </Button>
-                          </>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleResumeTask(task.id)}
+                            className="h-7 px-2 text-[10px]"
+                          >
+                            恢复
+                          </Button>
                         )}
                         {task.status === 'completed' && (
                           <>
