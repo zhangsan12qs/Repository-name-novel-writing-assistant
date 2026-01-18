@@ -4140,26 +4140,6 @@ ${data.story.ending || ''}`;
             {/* 自动生成大纲 */}
             <AutoOutlineDialog onGenerateComplete={handleAutoOutlineComplete} />
 
-            {/* 一键自动生成 */}
-            <Button
-              size="sm"
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 hover:from-blue-600 hover:to-purple-600"
-              onClick={() => setShowGenerateAll(!showGenerateAll)}
-              disabled={generating}
-            >
-              {generating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  生成中...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  一键自动生成
-                </>
-              )}
-            </Button>
-
             {/* 核心写作规则 */}
             <Card className="p-2 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
               <div className="text-xs font-medium mb-1 text-red-700 dark:text-red-300 flex items-center gap-1">
@@ -6586,7 +6566,7 @@ ${data.story.ending || ''}`;
                 <div className="text-center py-8 text-muted-foreground">
                   <ListTodo className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">暂无任务</p>
-                  <p className="text-xs mt-1">使用"一键自动生成"创建新任务</p>
+                  <p className="text-xs mt-1">使用"自动生成大纲"或"批量生成章节"创建任务</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
@@ -6757,7 +6737,7 @@ ${data.story.ending || ''}`;
             <Card className="p-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <h4 className="font-medium text-sm mb-2 text-blue-700 dark:text-blue-300">使用说明</h4>
               <div className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                <div>• 点击"一键自动生成"创建后台生成任务</div>
+                <div>• 使用"自动生成大纲"或"批量生成章节"创建后台生成任务</div>
                 <div>• 任务在后台执行，支持长时间运行（1000章+）</div>
                 <div>• 每章自动生成3000+字完整内容</div>
                 <div>• 支持暂停/恢复，断点续传</div>
