@@ -310,7 +310,7 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
         {/* 配置面板 */}
         <Tabs value={aiMode} onValueChange={(v) => handleModeChange(v as AiMode)} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="developer">开发者模式</TabsTrigger>
+            <TabsTrigger value="developer">jm666直连配置</TabsTrigger>
             <TabsTrigger value="user">用户模式</TabsTrigger>
           </TabsList>
 
