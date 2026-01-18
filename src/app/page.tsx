@@ -44,6 +44,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
+import ThankAuthorButton from '@/components/thank-author-button';
 
 // 防抖函数
 function useDebounce<T>(value: T, delay: number): T {
@@ -3980,6 +3981,9 @@ export default function NovelEditor() {
             <Network className="h-4 w-4 mr-2" />
             网络诊断
           </Button>
+
+          {/* 感谢作者按钮 */}
+          <ThankAuthorButton />
 
 
           <Input
