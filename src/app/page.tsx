@@ -45,6 +45,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
 import ThankAuthorButton from '@/components/thank-author-button';
+import AutoOutlineDialog from '@/components/auto-outline-dialog';
 
 // 防抖函数
 function useDebounce<T>(value: T, delay: number): T {
@@ -231,6 +232,95 @@ export default function NovelEditor() {
   const setButtonLoadingState = useCallback((buttonId: string, loading: boolean) => {
     setButtonLoading(prev => ({ ...prev, [buttonId]: loading }));
   }, []);
+
+  // 处理自动生成大纲完成
+  const handleAutoOutlineComplete = (data: any) => {
+    console.log('[AutoOutline] 收到生成数据:', data);
+
+    // 设置标题
+    if (data.title) {
+      setTitle(data.title);
+    }
+
+    // 设置章节设置
+    if (data.targetChapterCount || data.targetWordCount) {
+      setChapterSettings({
+        targetChapterCount: data.targetChapterCount || 100,
+        targetWordCountPerChapter: data.targetWordCount || 3000,
+      });
+    }
+
+    // 设置世界观
+    if (data.world) {
+      const worldText = `核心设定：${data.world.coreSetting || ''}
+力量体系：${data.world.powerSystem || ''}
+地理环境：${data.world.geographicalEnvironment || ''}
+社会结构：${data.world.socialStructure || ''}
+历史背景：${data.world.historicalBackground || ''}
+核心冲突：${data.world.coreConflict || ''}
+创新点：${data.world.innovations || ''}`;
+      setWorldSettings([
+        {
+          id: 'world-1',
+          name: '世界观设定',
+          type: data.novelType || '玄幻',
+          description: worldText
+        }
+      ]);
+    }
+
+    // 设置人物
+    if (data.characters && data.characters.length > 0) {
+      const newCharacters = data.characters.map((char: any, index: number) => ({
+        id: `char-${Date.now()}-${index}`,
+        name: char.name || `人物${index + 1}`,
+        age: char.age || '',
+        role: char.role || '配角',
+        personality: char.personality || '',
+        background: char.background || '',
+        appearance: char.appearance || '',
+        abilities: char.abilities || '',
+        goals: char.goals || '',
+        weaknesses: char.weaknesses || '',
+        relationships: char.relationships || '',
+        appearanceReason: '',
+        disappearanceReason: '',
+        status: 'active' as const,
+        chapterAppearances: [] as string[],
+      }));
+      setCharacters(newCharacters);
+    }
+
+    // 设置故事大纲
+    if (data.story) {
+      const storyText = `【故事开端】
+${data.story.beginning || ''}
+
+【主要冲突】
+${data.story.mainConflict || ''}
+
+【转折点】
+${data.story.plotPoints?.map((p: string) => `• ${p}`).join('\n') || ''}
+
+【高潮】
+${data.story.climax || ''}
+
+【结局】
+${data.story.ending || ''}`;
+      setOutline(storyText);
+    }
+
+    // 设置章节概要（如果有）
+    if (data.chapters && data.chapters.length > 0) {
+      const chaptersText = data.chapters.map((ch: any) =>
+        `第${ch.chapter}章：${ch.title}\n${ch.outline}`
+      ).join('\n\n');
+      // 可以将章节概要追加到大纲中，或者单独保存
+      console.log('[AutoOutline] 章节概要已生成，共', data.chapters.length, '章');
+    }
+
+    alert(`大纲生成完成！\n\n包含：\n• 世界观设定\n• ${data.characters?.length || 0}个主要人物\n• 完整故事大纲\n• ${data.chapters?.length || 0}章详细概要\n\n你可以根据这个大纲开始批量生成章节了！`);
+  };
 
   // 实时部分结果（用于边分析边显示）
   const [partialResults, setPartialResults] = useState<any[]>([]);
@@ -3984,6 +4074,9 @@ export default function NovelEditor() {
 
           {/* 感谢作者按钮 */}
           <ThankAuthorButton />
+
+          {/* 自动生成大纲按钮 */}
+          <AutoOutlineDialog onGenerateComplete={handleAutoOutlineComplete} />
 
 
           <Input
