@@ -1208,10 +1208,14 @@ ${data.story.ending || ''}`;
 
       console.log('[改人名] 开始生成名字:', request);
 
+      const savedApiKey = localStorage.getItem('siliconflow_api_key');
       const response = await fetch('/api/ai/generate-name', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request)
+        body: JSON.stringify({
+          ...request,
+          apiKey: savedApiKey || undefined
+        })
       });
 
       if (response.ok) {
@@ -1276,10 +1280,14 @@ ${data.story.ending || ''}`;
             avoidNames: characters.map(c => c.name).concat(Object.values(oldToNewNames))
           };
 
+          const savedApiKey = localStorage.getItem('siliconflow_api_key');
           const response = await fetch('/api/ai/generate-name', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(request)
+            body: JSON.stringify({
+              ...request,
+              apiKey: savedApiKey || undefined
+            })
           });
 
           if (response.ok) {
@@ -2112,6 +2120,7 @@ ${data.story.ending || ''}`;
         controller.abort();
       }, 30 * 60 * 1000); // 30分钟
 
+      const savedApiKey = localStorage.getItem('siliconflow_api_key');
       const response = await fetch('/api/ai/batch-generate-chapters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2124,6 +2133,7 @@ ${data.story.ending || ''}`;
           existingChapters: chapters,
           existingVolumes: volumes,
           title,
+          apiKey: savedApiKey || undefined
         }),
         signal: controller.signal,
       });
@@ -2400,6 +2410,7 @@ ${data.story.ending || ''}`;
       console.log('[一键修改] 开始修复章节，数量:', batchGenerateResult.chapters.length);
 
       // 调用批量生成API，但传入修复模式标志
+      const savedApiKey = localStorage.getItem('siliconflow_api_key');
       const response = await fetch('/api/ai/batch-generate-chapters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2414,7 +2425,8 @@ ${data.story.ending || ''}`;
           title,
           fixMode: true, // 修复模式标志
           chaptersToFix: batchGenerateResult.chapters, // 需要修复的章节
-          qualityCheck: batchGenerateResult.qualityCheck // 传入质量检查结果
+          qualityCheck: batchGenerateResult.qualityCheck, // 传入质量检查结果
+          apiKey: savedApiKey || undefined
         }),
       });
 

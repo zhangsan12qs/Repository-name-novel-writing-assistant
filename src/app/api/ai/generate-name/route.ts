@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
 import { generateRandomName, validateNameQuality } from '@/lib/name-generator';
+import { getApiKey } from '@/lib/ai-config';
 
 export const maxDuration = 60;
 
@@ -142,6 +144,7 @@ interface GenerateNameRequest {
   style?: string;
   baseName?: string; // 基础生成的名字，用于AI优化
   avoidNames?: string[]; // 避免使用的名字
+  apiKey?: string; // 用户提供的 API Key
 }
 
 export async function POST(request: NextRequest) {
@@ -158,7 +161,8 @@ export async function POST(request: NextRequest) {
       region = '',
       style = 'fantasy',
       baseName,
-      avoidNames = []
+      avoidNames = [],
+      apiKey
     } = requestBody;
 
     console.log('[起名系统] 开始生成名字:', {
@@ -167,7 +171,8 @@ export async function POST(request: NextRequest) {
       personality,
       background,
       style,
-      hasBaseName: !!baseName
+      hasBaseName: !!baseName,
+      hasApiKey: !!apiKey
     });
 
     // 如果有基础名字且没有详细的人物属性，直接返回基础名字
@@ -179,6 +184,25 @@ export async function POST(request: NextRequest) {
         style,
         gender
       });
+    }
+
+    // 获取 API Key（优先使用前端传来的，否则使用环境变量）
+    let finalApiKey: string;
+    let useSiliconFlow = false;
+
+    try {
+      if (apiKey && apiKey.trim()) {
+        finalApiKey = apiKey.trim();
+        useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
+      } else {
+        finalApiKey = getApiKey(); // 使用环境变量（Coze）
+        useSiliconFlow = false;
+      }
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
     }
 
     // 构建提示词
@@ -224,23 +248,44 @@ ${region ? `- 地域特色：${region}` : ''}
 请开始生成名字：`;
 
     // 使用LLM生成名字
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    let result = '';
 
-    const messages = [
-      { role: 'user' as const, content: prompt }
-    ];
+    if (useSiliconFlow) {
+      // 使用硅基流动 API
+      const siliconClient = new SiliconFlowClient(finalApiKey);
+      const messages: SiliconFlowMessage[] = [
+        { role: 'user', content: prompt }
+      ];
 
-    const response = await client.invoke(messages, {
-      temperature: 0.8, // 较高的温度以增加创造力
-    });
+      const response = await siliconClient.streamChat(messages, {
+        temperature: 0.8,
+        maxTokens: 2000,
+      });
 
-    console.log('[起名系统] LLM原始输出:', response);
+      // 硅基流动返回的是流式数据，这里我们收集所有内容
+      for await (const chunk of response) {
+        result += chunk;
+      }
+    } else {
+      // 使用 Coze SDK（环境变量）
+      const config = new Config({
+        apiKey: finalApiKey,
+        baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+      });
+      const client = new LLMClient(config);
 
-    const result = response.content || '';
+      const messages = [
+        { role: 'user' as const, content: prompt }
+      ];
+
+      const response = await client.invoke(messages, {
+        temperature: 0.8, // 较高的温度以增加创造力
+      });
+
+      result = response.content || '';
+    }
+
+    console.log('[起名系统] LLM原始输出:', result);
 
     // 尝试解析JSON
     let nameData: any = null;

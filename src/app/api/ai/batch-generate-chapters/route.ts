@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
 import { detectIssuesBatch } from '@/lib/issue-detector';
 import { checkContentPenaltiesSmart, PenaltyLevel, getPenaltyMessage } from '@/lib/penalty-system';
+import { getApiKey } from '@/lib/ai-config';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
       volumesCount: body.existingVolumes?.length || 0,
       fixMode: body.fixMode || false,
       chaptersToFixCount: body.chaptersToFix?.length || 0,
+      hasApiKey: !!body.apiKey
     });
 
     const {
@@ -122,8 +125,28 @@ export async function POST(request: NextRequest) {
       title,
       fixMode = false,
       chaptersToFix = [],
-      qualityCheck = null
+      qualityCheck = null,
+      apiKey
     } = body;
+
+    // 获取 API Key（优先使用前端传来的，否则使用环境变量）
+    let finalApiKey: string;
+    let useSiliconFlow = false;
+
+    try {
+      if (apiKey && apiKey.trim()) {
+        finalApiKey = apiKey.trim();
+        useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
+      } else {
+        finalApiKey = getApiKey(); // 使用环境变量（Coze）
+        useSiliconFlow = false;
+      }
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
     if (!chapterCount || !outline) {
       console.error('[BatchGenerate] 缺少必要参数');
