@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自动恢复拆书分析数据</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e293b 0%, #991b1b 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .log {
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-family: monospace;
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 12px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid #22c55e;
+    }
+    .log-entry.error {
+      border-left-color: #ef4444;
+    }
+    .log-entry.warning {
+      border-left-color: #f59e0b;
+    }
+    .btn {
+      background: linear-gradient(to right, #16a34a, #059669);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+      transition: transform 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+    }
+    .btn.secondary {
+      background: linear-gradient(to right, #6366f1, #8b5cf6);
+    }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .status.found {
+      background: rgba(34, 197, 94, 0.2);
+      border: 2px solid #22c55e;
+    }
+    .status.not-found {
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔄 自动恢复拆书分析数据</h1>
+    <div id="status" class="status">准备开始...</div>
+    <div id="log" class="log"></div>
+    <div id="actions" style="text-align: center;"></div>
+  </div>
+
+  <script>
+    const logDiv = document.getElementById('log');
+    const statusDiv = document.getElementById('status');
+    const actionsDiv = document.getElementById('actions');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function setStatus(text, found) {
+      statusDiv.textContent = text;
+      statusDiv.className = `status ${found ? 'found' : 'not-found'}`;
+    }
+
+    let recoveredData = {
+      analysisResult: null,
+      partialResults: null,
+      importData: null
+    };
+
+    function recover() {
+      log('开始自动恢复拆书分析数据...');
+      let foundCount = 0;
+
+      // 检查 novel-editor-data
+      try {
+        const mainData = localStorage.getItem('novel-editor-data');
+        if (mainData) {
+          log('找到 novel-editor-data，正在解析...');
+          const parsed = JSON.parse(mainData);
+
+          if (parsed.analysisResult) {
+            recoveredData.analysisResult = parsed.analysisResult;
+            log(`✓ 找到 analysisResult (长度: ${JSON.stringify(parsed.analysisResult).length} 字符)`);
+            foundCount++;
+          } else {
+            log('✗ analysisResult 不存在', 'warning');
+          }
+
+          if (parsed.partialResults && parsed.partialResults.length > 0) {
+            recoveredData.partialResults = parsed.partialResults;
+            log(`✓ 找到 partialResults (${parsed.partialResults.length} 项)`);
+            foundCount++;
+          } else {
+            log('✗ partialResults 不存在或为空', 'warning');
+          }
+
+          if (parsed.importData) {
+            recoveredData.importData = parsed.importData;
+            log(`✓ 找到 importData`);
+            foundCount++;
+          } else {
+            log('✗ importData 不存在', 'warning');
+          }
+        } else {
+          log('✗ novel-editor-data 不存在', 'error');
+        }
+      } catch (e) {
+        log(`解析 novel-editor-data 失败: ${e.message}`, 'error');
+      }
+
+      // 检查独立键
+      const independentKeys = ['analysisResult', 'partialResults', 'importData'];
+      independentKeys.forEach(key => {
+        try {
+          const data = localStorage.getItem(key);
+          if (data && !recoveredData[key]) {
+            recoveredData[key] = JSON.parse(data);
+            log(`✓ 从独立键 ${key} 找到数据`);
+            foundCount++;
+          }
+        } catch (e) {
+          log(`检查 ${key} 失败: ${e.message}`, 'error');
+        }
+      });
+
+      // 显示结果
+      if (foundCount > 0) {
+        setStatus(`✓ 成功找到 ${foundCount} 项数据！`, true);
+        showActions();
+      } else {
+        setStatus('✗ 未找到任何拆书分析数据', false);
+        showNoDataActions();
+      }
+
+      log('恢复检查完成');
+    }
+
+    function showActions() {
+      actionsDiv.innerHTML = `
+        <button class="btn" onclick="exportAll()">📥 导出所有数据</button>
+        <button class="btn secondary" onclick="goToApp()">✅ 返回写作应用</button>
+      `;
+    }
+
+    function showNoDataActions() {
+      actionsDiv.innerHTML = `
+        <button class="btn secondary" onclick="goToApp()">❌ 返回写作应用</button>
+        <div style="margin-top: 20px; padding: 15px; background: rgba(239, 68, 68, 0.2); border-radius: 8px;">
+          <strong>数据丢失可能的原因：</strong>
+          <ul style="text-align: left; margin-left: 30px;">
+            <li>清除了浏览器缓存或Cookie</li>
+            <li>使用了隐私/无痕模式</li>
+            <li>更换了浏览器或设备</li>
+            <li>浏览器自动清理了旧数据</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    function exportAll() {
+      log('开始导出所有恢复的数据...');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+      if (recoveredData.analysisResult) {
+        downloadJSON(recoveredData.analysisResult, `analysisResult-${timestamp}.json`);
+        log('✓ 已导出 analysisResult');
+      }
+
+      if (recoveredData.partialResults) {
+        downloadJSON(recoveredData.partialResults, `partialResults-${timestamp}.json`);
+        log('✓ 已导出 partialResults');
+      }
+
+      if (recoveredData.importData) {
+        downloadJSON(recoveredData.importData, `importData-${timestamp}.json`);
+        log('✓ 已导出 importData');
+      }
+
+      // 导出合并数据
+      downloadJSON(recoveredData, `all-recovered-data-${timestamp}.json`);
+      log('✓ 已导出合并的恢复数据');
+
+      log('导出完成！');
+    }
+
+    function downloadJSON(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function goToApp() {
+      window.location.href = '/';
+    }
+
+    // 自动开始恢复
+    setTimeout(recover, 500);
+  </script>
+</body>
+</html>
