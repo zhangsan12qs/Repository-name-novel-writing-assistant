@@ -31,7 +31,7 @@ export default function ThankAuthorButton() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
-            <Heart className="h-6 w-6 text-pink-600" />
+            <Heart className="h-5 w-5 text-pink-600" />
             感谢支持
           </DialogTitle>
           <DialogDescription>
