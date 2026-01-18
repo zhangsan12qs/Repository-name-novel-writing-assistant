@@ -24,14 +24,14 @@ export async function POST(request: NextRequest) {
 
     // 创建任务
     const task = taskManager.createTask({
+      type: 'batch-generate-chapters',
+      name: `重新生成章节（${chapterCount}章）`,
+      priority: 8, // 中高优先级
       genre: '重新生成', // 这里不太重要，只是标记
       theme: '基于大纲重新生成',
       protagonist: '',
       chapterCount,
     });
-
-    // 更新任务名称
-    task.name = `重新生成章节（${chapterCount}章）`;
 
     // 立即返回任务ID，实际生成在后台进行
     setTimeout(() => {

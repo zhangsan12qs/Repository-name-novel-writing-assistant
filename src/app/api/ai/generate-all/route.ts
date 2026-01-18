@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
 
     // 创建任务
     const task = taskManager.createTask({
+      type: 'generate-all',
+      name: `一键生成（${chapterCountNum}章）`,
+      priority: 10, // 高优先级
       genre,
       theme,
       protagonist,
