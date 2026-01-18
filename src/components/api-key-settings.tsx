@@ -118,8 +118,8 @@ const DEFAULT_USER_CONFIG = {
 };
 
 const DEFAULT_DEVELOPER_CONFIG = {
-  model: 'llama-3.1-70b-versatile',  // 70B参数，128k上下文，适合长篇
-  temperature: 0.7,
+  model: 'llama-3.1-70b-versatile',  // 70B参数，128k上下文，适合长篇（1000章+）
+  temperature: 0.75,  // 适中的随机性
   maxTokens: 8192,  // 增加到8192，利用大上下文
   topP: 1.0
 };
@@ -271,14 +271,14 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
                   <Globe className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">直接部署模式</h3>
-                  <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
-                    推荐
+                  <h3 className="font-semibold text-lg">jm666直连配置</h3>
+                  <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                    已预配置
                   </Badge>
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                使用开发者预配置的 Groq 免费 AI，零配置即可使用，开箱即用
+                已预置高性能 AI（Llama 3.1 70B，128k上下文），无需 API Key，点开即用，支持 1000 章超长篇创作
               </p>
               <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
                 <div className="flex items-center gap-2">
@@ -291,7 +291,7 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="h-4 w-4 text-purple-500" />
-                  <span>Llama 3.1、Mixtral 等开源模型</span>
+                  <span>128k 上下文，适合 1000 章长篇</span>
                 </div>
               </div>
             </Card>
@@ -345,12 +345,13 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
 
           {/* 开发者模式配置 */}
           <TabsContent value="developer" className="space-y-6 mt-4">
-            <Alert className="bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
-              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              <AlertDescription className="text-purple-800 dark:text-purple-200">
-                <strong>免费使用 Groq AI</strong>：无需配置，直接使用预置模型。
-                <strong>长篇生成推荐：</strong>Llama 3.1 70B（128k上下文）或 Mixtral 8x7B（32k上下文），
-                能记住更多情节和人物，适合生成长篇小说。速度极快且完全免费。
+            <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                <strong>✅ 已预配置，可直接使用</strong>：jm666直连配置已经为你准备好了高性能 AI，
+                无需任何 API Key，点击"续写"、"扩写"等按钮即可开始创作。
+                <br/>
+                <strong>📚 当前配置：</strong>Llama 3.1 70B（128k上下文），适合 1000 章超长篇小说生成。
               </AlertDescription>
             </Alert>
 

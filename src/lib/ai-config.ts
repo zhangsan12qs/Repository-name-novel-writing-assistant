@@ -41,11 +41,11 @@ export function getDeveloperApiKey(): string {
 
   // 开发环境：提示用户配置
   if (process.env.NODE_ENV === 'development') {
-    throw new Error('开发者模式需要配置 GROQ_API_KEY 环境变量。请创建 .env 文件并添加 GROQ_API_KEY=your_key_here。免费获取：https://console.groq.com/keys');
+    throw new Error('jm666直连配置需要配置 GROQ_API_KEY 环境变量。请创建 .env 文件并添加 GROQ_API_KEY=your_key_here。免费获取：https://console.groq.com/keys');
   }
 
   // 生产环境：返回提示
-  throw new Error('开发者模式未配置。请联系管理员配置 GROQ_API_KEY 环境变量。免费获取：https://console.groq.com/keys');
+  throw new Error('jm666直连配置未配置。请联系管理员配置 GROQ_API_KEY 环境变量。免费获取：https://console.groq.com/keys');
 }
 
 /**
@@ -56,8 +56,8 @@ export function getDeveloperModel(): string {
     return process.env.GROQ_MODEL;
   }
 
-  // 默认使用 Llama 3.1 8B（速度快、质量好）
-  return 'llama-3.1-8b-instant';
+  // 默认使用 Llama 3.1 70B（适合长篇生成，128k上下文）
+  return 'llama-3.1-70b-versatile';
 }
 
 /**
