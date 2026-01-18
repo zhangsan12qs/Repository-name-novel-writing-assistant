@@ -224,7 +224,10 @@ ${region ? `- 地域特色：${region}` : ''}
 请开始生成名字：`;
 
     // 使用LLM生成名字
-    const config = new Config();
+    const config = new Config({
+      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
+      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    });
     const client = new LLMClient(config);
 
     const messages = [

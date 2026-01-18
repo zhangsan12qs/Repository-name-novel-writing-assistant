@@ -5,7 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { genre, theme, protagonist, targetChapterCount, dissatisfactionReason, idealContent } = await request.json();
 
-    const config = new Config();
+    const config = new Config({
+      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
+      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    });
     const client = new LLMClient(config);
 
     const systemPrompt = `你是一位专业的网络小说策划师。你的任务是：

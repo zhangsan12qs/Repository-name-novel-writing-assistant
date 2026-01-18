@@ -227,7 +227,10 @@ ${userFeedbackPrompt}
     console.log(`[改写API] Prompt长度: ${prompt.length}字符`);
 
     // 使用LLMClient直接调用LLM
-    const config = new Config();
+    const config = new Config({
+      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
+      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    });
     const client = new LLMClient(config);
 
     const messages = [

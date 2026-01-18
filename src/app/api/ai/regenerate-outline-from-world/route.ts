@@ -5,7 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { currentOutline, worldSettings, characters, title } = await request.json();
 
-    const config = new Config();
+    const config = new Config({
+      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
+      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    });
     const client = new LLMClient(config);
 
     const systemPrompt = `你是一位专业的网络小说策划师。你的任务是：根据当前的小说大纲、世界观设定和角色信息，重新生成一个更加完善、更加符合逻辑的故事大纲。

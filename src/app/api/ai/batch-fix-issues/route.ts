@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config();
+    const config = new Config({
+      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
+      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    });
     const client = new LLMClient(config);
 
     // 构建系统提示词
