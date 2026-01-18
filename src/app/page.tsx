@@ -4118,6 +4118,17 @@ ${data.story.ending || ''}`;
           </div>
         </div>
 
+        {/* 分隔线 */}
+        <div className="border-t my-3" />
+
+        {/* 感谢作者 - 独立显示，不属于任何阶段 */}
+        <Card className="p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-pink-200 dark:border-pink-800">
+          <ThankAuthorButton />
+        </Card>
+
+        {/* 分隔线 */}
+        <div className="border-t my-3" />
+
         {/* 阶段1：准备设定 */}
         {currentStep === 1 && (
           <div className="space-y-3">
@@ -4367,9 +4378,6 @@ ${data.story.ending || ''}`;
               <Network className="h-4 w-4 mr-2" />
               网络诊断
             </Button>
-
-            {/* 感谢作者 */}
-            <ThankAuthorButton />
 
             {/* 清除所有数据 */}
             <Button
@@ -5487,7 +5495,7 @@ ${data.story.ending || ''}`;
 
         {/* 高效模式开关 */}
         <Card className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               <div className="flex flex-col">
@@ -5508,9 +5516,23 @@ ${data.story.ending || ''}`;
               {performanceMode ? '已开启' : '开启'}
             </Button>
           </div>
-          {performanceMode && (
+          {performanceMode ? (
+            <div className="mt-2 text-[10px] text-purple-600 dark:text-purple-400 space-y-1">
+              <div className="font-medium">✨ 高效模式已启用，将优化以下方面：</div>
+              <div className="pl-2">
+                <div>• <strong>问题检测</strong>：跳过次要问题（逻辑转折、代词重复、场景转换、生僻字），专注核心质量检查</div>
+                <div>• <strong>人物追踪</strong>：优化追踪频率，减少重复计算</div>
+                <div>• <strong>数据保存</strong>：保存间隔从3秒延长至5秒，减少写入次数</div>
+                <div>• <strong>核心保护</strong>：保留所有重要检查（华美空洞、流水账、狗血剧情、感情线、成长线、人设矛盾等）</div>
+              </div>
+            </div>
+          ) : (
             <div className="mt-2 text-[10px] text-purple-600 dark:text-purple-400">
-              高效模式下将：• 优化问题检测（跳过次要问题）• 优化人物追踪频率 • 降低保存频率 • 保持核心质量检查
+              <div className="font-medium">💡 高效模式介绍</div>
+              <div className="pl-2">
+                <div>当章节数超过100或人物数超过50时，系统会自动开启高效模式</div>
+                <div>高效模式可以优化性能，同时确保核心质量检查不受影响</div>
+              </div>
             </div>
           )}
         </Card>
