@@ -66,6 +66,88 @@ export async function POST(request: NextRequest) {
       customRequirements = '',
     } = body;
 
+    // ========== 动态计算参数（根据章节数量调整） ==========
+    // 人物数量：根据章节数量动态调整
+    let mainCharacterCount = 3; // 主要人物数量（主角+重要配角）
+    let sideCharacterCount = 5; // 配角数量
+    let villainCount = 2; // 反派数量
+
+    if (targetChapterCount <= 50) {
+      // 短篇（10-50章）
+      mainCharacterCount = 3;
+      sideCharacterCount = 3;
+      villainCount = 1;
+    } else if (targetChapterCount <= 100) {
+      // 中短篇（51-100章）
+      mainCharacterCount = 4;
+      sideCharacterCount = 5;
+      villainCount = 2;
+    } else if (targetChapterCount <= 300) {
+      // 中篇（101-300章）
+      mainCharacterCount = 5;
+      sideCharacterCount = 8;
+      villainCount = 3;
+    } else if (targetChapterCount <= 500) {
+      // 中长篇（301-500章）
+      mainCharacterCount = 6;
+      sideCharacterCount = 12;
+      villainCount = 4;
+    } else if (targetChapterCount <= 700) {
+      // 长篇（501-700章）
+      mainCharacterCount = 8;
+      sideCharacterCount = 15;
+      villainCount = 5;
+    } else {
+      // 超长篇（701-1000章）
+      mainCharacterCount = 10;
+      sideCharacterCount = 20;
+      villainCount = 6;
+    }
+
+    const totalCharacters = mainCharacterCount + sideCharacterCount + villainCount;
+
+    // 转折点数量：根据章节数量动态调整
+    let plotPointCount = 3; // 主要转折点数量
+    if (targetChapterCount <= 50) {
+      plotPointCount = 3;
+    } else if (targetChapterCount <= 100) {
+      plotPointCount = 5;
+    } else if (targetChapterCount <= 300) {
+      plotPointCount = 8;
+    } else if (targetChapterCount <= 500) {
+      plotPointCount = 12;
+    } else if (targetChapterCount <= 700) {
+      plotPointCount = 15;
+    } else {
+      plotPointCount = 20;
+    }
+
+    // 支线剧情数量：根据章节数量动态调整
+    let subPlotCount = 2; // 支线剧情数量
+    if (targetChapterCount <= 50) {
+      subPlotCount = 2;
+    } else if (targetChapterCount <= 100) {
+      subPlotCount = 3;
+    } else if (targetChapterCount <= 300) {
+      subPlotCount = 5;
+    } else if (targetChapterCount <= 500) {
+      subPlotCount = 7;
+    } else if (targetChapterCount <= 700) {
+      subPlotCount = 10;
+    } else {
+      subPlotCount = 12;
+    }
+
+    console.log('[GenerateFullOutline] 动态计算参数:', {
+      targetChapterCount,
+      mainCharacterCount,
+      sideCharacterCount,
+      villainCount,
+      totalCharacters,
+      plotPointCount,
+      subPlotCount,
+    });
+
     // 验证参数
     if (targetChapterCount < 10 || targetChapterCount > 1000) {
       console.error('[GenerateFullOutline] 章节数超出范围:', targetChapterCount);
@@ -206,6 +288,8 @@ ${avoidClichés ? '6. 避免常见套路（如：退婚、打脸、后宫等）'
 【小说信息】
 - 标题：${title}
 - 类型：${novelType}
+- 总章节数：${targetChapterCount}章
+- 总字数：约${targetChapterCount * targetWordCount}字
 - 故事模式：${storyMode}
 - 情感基调：${emotionalTone}
 - 世界观：${JSON.stringify(worldContent.substring(0, 500))}
@@ -218,14 +302,28 @@ ${protagonistBackground ? `- 主角背景：${protagonistBackground}` : ''}
 ${protagonistAbility ? `- 主角能力：${protagonistAbility}` : ''}
 ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 
+【动态人物配置】
+根据${targetChapterCount}章的超长篇小说体量，需要设计：
+- 主要人物：${mainCharacterCount}个（主角 + 重要配角 + 主要反派）
+- 配角：${sideCharacterCount}个（配角角色，用于支撑剧情）
+- 反派：${villainCount}个（反派角色，用于制造冲突）
+- 总人物：${totalCharacters}个
+
 【要求】
-1. 设计3-5个主要人物（主角+2-4个重要配角）
+1. 设计${totalCharacters}个人物（根据章节数量动态调整）
+   - 第1个必须是主角
+   - 包含${villainCount}个反派角色
+   - 包含${sideCharacterCount}个配角角色
+   - 剩余${mainCharacterCount - 1 - villainCount}个为主要配角
 2. 如果用户提供了主角设定，必须使用用户设定的主角信息
 3. 每个人物要有鲜明的性格、背景、动机
-4. 人物关系要合理，符合剧情需要
+4. 人物关系要合理，符合剧情需要，人物之间要有互动和冲突
 5. 避免套路化人物形象
 6. 人物成长轨迹要清晰
 7. 人物目标必须服务于外部使命（如拯救世界、复仇、守护等），不能仅是个人成长
+8. 人物数量要足够支撑${targetChapterCount}章的长篇内容，避免人物过少导致剧情空洞
+9. 人物要有足够的深度和复杂性，能够支撑长篇剧情的发展
+10. 反派要有合理的动机和背景，不能是简单的工具人
 
 【写作规矩（严格遵守）】
 1. 全文禁止以感情线作为主线！
@@ -234,7 +332,7 @@ ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 4. 避免华美空洞、流水账、套路化等AI写作弊端
 
 【输出格式】
-请以JSON格式输出：
+请以JSON格式输出（必须包含${totalCharacters}个人物）：
 [
   {
     "name": "人物姓名",
@@ -318,6 +416,7 @@ ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 - 类型：${novelType}
 - 章节目标：${targetChapterCount}章
 - 每章字数：${targetWordCount}字
+- 总字数：约${targetChapterCount * targetWordCount}字
 - 叙事风格：${narrativeStyle}
 - 语言风格：${languageStyle}
 - 节奏偏好：${pacePreference}
@@ -326,7 +425,7 @@ ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 - 情感基调：${emotionalTone}
 - ${needVolumes ? `分卷规划：需要分成${volumeCount}卷` : '分卷规划：不需要分卷'}
 - 世界观：${worldContent.substring(0, 300)}
-- 主要人物：${JSON.stringify(characterContent.substring(0, 300))}
+- 主要人物：${totalCharacters}个
 
 【主题设定】
 ${coreTheme ? `- 核心主题：${coreTheme}` : ''}
@@ -335,16 +434,27 @@ ${philosophicalThinking ? `- 哲学思考：${philosophicalThinking}` : ''}
 【用户提供的设定】
 ${climaxSetting ? `- 高潮设定：${climaxSetting}` : ''}
 
+【动态剧情配置】
+根据${targetChapterCount}章的超长篇小说体量，需要设计：
+- 主要转折点：${plotPointCount}个
+- 支线剧情：${subPlotCount}条
+- 节奏分配：每${Math.ceil(targetChapterCount / plotPointCount)}章安排一个主要转折点
+
 【要求】
 1. 故事要有明确的开端、发展、高潮、结局
-2. 整体大纲要能支撑${targetChapterCount}章的内容
-3. 必须包含：起因、主要冲突、转折点、高潮、结局
-4. 避免套路化剧情，要有创新点
-5. 保持剧情的连贯性和吸引力
-6. 根据故事模式调整剧情结构（探险成长、复仇、守护、争霸、解谜、生存、创造）
-7. 主线必须围绕外部使命（拯救世界、复仇、守护重要事物等），禁止以感情线或个人成长为主线
-8. ${needVolumes ? `剧情要合理分配到${volumeCount}卷中，每卷要有独立的起承转合` : '剧情结构要完整'}
-9. ${avoidElements ? `避免以下元素：${avoidElements}` : ''}
+2. 整体大纲要能支撑${targetChapterCount}章的内容，剧情复杂度要足够
+3. 必须包含：起因、主要冲突、${plotPointCount}个转折点、高潮、结局
+4. 转折点要合理分布在整个故事中，避免前期或后期过于密集
+5. 每个转折点都要有足够的铺垫和影响
+6. 设计${subPlotCount}条支线剧情，与主线相互交织，增加故事层次
+7. 支线剧情要有独立的起承转合，不能只是简单的填充
+8. 避免套路化剧情，要有创新点
+9. 保持剧情的连贯性和吸引力
+10. 根据故事模式调整剧情结构（探险成长、复仇、守护、争霸、解谜、生存、创造）
+11. 主线必须围绕外部使命（拯救世界、复仇、守护重要事物等），禁止以感情线或个人成长为主线
+12. ${needVolumes ? `剧情要合理分配到${volumeCount}卷中，每卷要有独立的起承转合` : '剧情结构要完整'}
+13. 剧情要足够复杂，能够支撑${targetChapterCount}章的长篇内容，避免剧情过于简单导致注水
+14. ${avoidElements ? `避免以下元素：${avoidElements}` : ''}
 
 【写作规矩（严格遵守）】
 1. 全文禁止以感情线作为主线！
@@ -360,7 +470,8 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
 {
   "beginning": "故事开端（100-200字）",
   "mainConflict": "主要冲突（100-200字）",
-  "plotPoints": ["转折点1（50-100字）", "转折点2（50-100字）", ...],
+  "plotPoints": ["转折点1（50-100字）", "转折点2（50-100字）", ...（必须包含${plotPointCount}个转折点）],
+  "subPlots": ["支线剧情1（50-100字）", "支线剧情2（50-100字）", ...（必须包含${subPlotCount}条支线）],
   "climax": "高潮（100-200字）",
   "ending": "结局（100-200字）"
 }`;
@@ -436,6 +547,7 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
 - 标题：${title}
 - 类型：${novelType}
 - 总章节数：${targetChapterCount}章
+- 总字数：约${targetChapterCount * targetWordCount}字
 - 当前批次：第${startChapter}-${endChapter}章（共${chaptersInBatch}章）
 - 每章字数：${targetWordCount}字
 - 叙事风格：${narrativeStyle}
@@ -447,11 +559,18 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
 - ${needVolumes ? `分卷规划：需要分成${volumeCount}卷` : '分卷规划：不需要分卷'}
 - 整体大纲：${JSON.stringify(storyData)}
 
+【动态参数】
+- 总人物：${totalCharacters}个
+- 主要转折点：${plotPointCount}个
+- 支线剧情：${subPlotCount}条
+- 转折点分布：每${Math.ceil(targetChapterCount / plotPointCount)}章一个主要转折点
+
 【主题设定】
 ${coreTheme ? `- 核心主题：${coreTheme}` : ''}
 ${philosophicalThinking ? `- 哲学思考：${philosophicalThinking}` : ''}
 
 【主要人物】
+- 总人物：${totalCharacters}个
 - 主角：${protagonistName || '未命名'}
 ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 
@@ -474,6 +593,9 @@ ${needVolumes ? `当前批次属于第${Math.ceil(startChapter / (targetChapterC
 8. 语言风格要符合${languageStyle}风格
 9. 节奏要符合${pacePreference}要求
 10. ${avoidElements ? `避免以下元素：${avoidElements}` : ''}
+11. 合理利用${totalCharacters}个人物，确保重要人物都有出场和发展
+12. 支线剧情要与主线交织，在适当的章节中推进支线
+13. 根据转折点分布，在每${Math.ceil(targetChapterCount / plotPointCount)}章附近安排主要转折点
 
 【写作规矩（严格遵守）】
 1. 全文禁止以感情线作为主线！

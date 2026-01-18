@@ -9,10 +9,115 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sparkles, Loader2, CheckCircle, BookOpen, Users, Globe, FileText, User, Zap, Heart, Swords, Map, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle, BookOpen, Users, Globe, FileText, User, Zap, Heart, Swords, Map, XCircle, ChevronDown, ChevronUp, Activity } from 'lucide-react';
 
 interface Props {
   onGenerateComplete: (data: any) => void;
+}
+
+// 动态参数预览组件
+function DynamicParametersPreview({ targetChapterCount, targetWordCount }: { targetChapterCount: number; targetWordCount: number }) {
+  // 动态计算参数
+  const getParameters = () => {
+    let mainCharacterCount = 3;
+    let sideCharacterCount = 5;
+    let villainCount = 2;
+    let plotPointCount = 3;
+    let subPlotCount = 2;
+
+    if (targetChapterCount <= 50) {
+      mainCharacterCount = 3;
+      sideCharacterCount = 3;
+      villainCount = 1;
+      plotPointCount = 3;
+      subPlotCount = 2;
+    } else if (targetChapterCount <= 100) {
+      mainCharacterCount = 4;
+      sideCharacterCount = 5;
+      villainCount = 2;
+      plotPointCount = 5;
+      subPlotCount = 3;
+    } else if (targetChapterCount <= 300) {
+      mainCharacterCount = 5;
+      sideCharacterCount = 8;
+      villainCount = 3;
+      plotPointCount = 8;
+      subPlotCount = 5;
+    } else if (targetChapterCount <= 500) {
+      mainCharacterCount = 6;
+      sideCharacterCount = 12;
+      villainCount = 4;
+      plotPointCount = 12;
+      subPlotCount = 7;
+    } else if (targetChapterCount <= 700) {
+      mainCharacterCount = 8;
+      sideCharacterCount = 15;
+      villainCount = 5;
+      plotPointCount = 15;
+      subPlotCount = 10;
+    } else {
+      mainCharacterCount = 10;
+      sideCharacterCount = 20;
+      villainCount = 6;
+      plotPointCount = 20;
+      subPlotCount = 12;
+    }
+
+    return {
+      mainCharacterCount,
+      sideCharacterCount,
+      villainCount,
+      totalCharacters: mainCharacterCount + sideCharacterCount + villainCount,
+      plotPointCount,
+      subPlotCount,
+      plotPointInterval: Math.ceil(targetChapterCount / plotPointCount),
+    };
+  };
+
+  const params = getParameters();
+
+  return (
+    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Zap className="h-4 w-4 text-blue-600" />
+        <span className="font-semibold text-sm text-blue-700">动态参数配置</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="bg-white/50 rounded p-2">
+          <div className="text-muted-foreground mb-1">总人物数量</div>
+          <div className="font-bold text-lg text-blue-600">{params.totalCharacters}个</div>
+          <div className="text-muted-foreground">
+            主角+主要配角{params.mainCharacterCount-1}+配角{params.sideCharacterCount}+反派{params.villainCount}
+          </div>
+        </div>
+        <div className="bg-white/50 rounded p-2">
+          <div className="text-muted-foreground mb-1">主要转折点</div>
+          <div className="font-bold text-lg text-purple-600">{params.plotPointCount}个</div>
+          <div className="text-muted-foreground">
+            每{params.plotPointInterval}章一个
+          </div>
+        </div>
+        <div className="bg-white/50 rounded p-2">
+          <div className="text-muted-foreground mb-1">支线剧情</div>
+          <div className="font-bold text-lg text-green-600">{params.subPlotCount}条</div>
+          <div className="text-muted-foreground">
+            与主线交织
+          </div>
+        </div>
+        <div className="bg-white/50 rounded p-2">
+          <div className="text-muted-foreground mb-1">预计总字数</div>
+          <div className="font-bold text-lg text-orange-600">{(targetChapterCount * targetWordCount).toLocaleString()}字</div>
+          <div className="text-muted-foreground">
+            {targetChapterCount}章 × {targetWordCount}字
+          </div>
+        </div>
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1">
+        <FileText className="h-3 w-3" />
+        参数根据章节数量自动调整，确保长篇小说有足够的人物和剧情支撑
+      </p>
+    </Card>
+  );
 }
 
 // 可折叠区域组件
@@ -388,6 +493,9 @@ export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
                   <p className="text-xs text-muted-foreground mt-1">范围: 1000-10000字</p>
                 </div>
               </div>
+
+              {/* 动态参数预览 */}
+              <DynamicParametersPreview targetChapterCount={formData.targetChapterCount} targetWordCount={formData.targetWordCount} />
 
               {/* 主角设定 */}
               <CollapsibleSection
@@ -839,8 +947,32 @@ export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
                 <p className="font-semibold mb-2 text-sm">生成内容预览：</p>
                 <ul className="space-y-1 text-xs text-muted-foreground">
                   <li>✓ 详细的世界观设定（力量体系、地理环境、社会结构等）</li>
-                  <li>✓ 主要人物设定（3-5个）</li>
-                  <li>✓ 整体故事大纲</li>
+                  <li>✓ 主要人物设定（根据章节数量动态调整，约{(() => {
+                    const count = formData.targetChapterCount;
+                    if (count <= 50) return 7;
+                    if (count <= 100) return 11;
+                    if (count <= 300) return 16;
+                    if (count <= 500) return 22;
+                    if (count <= 700) return 28;
+                    return 36;
+                  })()}个）</li>
+                  <li>✓ 整体故事大纲（包含{(() => {
+                    const count = formData.targetChapterCount;
+                    if (count <= 50) return 3;
+                    if (count <= 100) return 5;
+                    if (count <= 300) return 8;
+                    if (count <= 500) return 12;
+                    if (count <= 700) return 15;
+                    return 20;
+                  })()}个主要转折点和{(() => {
+                    const count = formData.targetChapterCount;
+                    if (count <= 50) return 2;
+                    if (count <= 100) return 3;
+                    if (count <= 300) return 5;
+                    if (count <= 500) return 7;
+                    if (count <= 700) return 10;
+                    return 12;
+                  })()}条支线剧情）</li>
                   <li>✓ {formData.targetChapterCount}章详细章节概要</li>
                   {formData.needVolumes && <li>✓ 分卷规划（{String(formData.volumeCount)}卷）</li>}
                   <li>✓ 总字数约 {(formData.targetChapterCount * formData.targetWordCount).toLocaleString()} 字</li>
