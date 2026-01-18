@@ -3,6 +3,8 @@
  * 支持长篇小说生成的异步任务处理
  */
 
+import { indexedDBStore } from './indexeddb-store';
+
 export type TaskStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'paused';
 
 export type TaskStep = 
@@ -219,9 +221,16 @@ class TaskManager {
    */
   private saveToStorage(): void {
     try {
-      const data = JSON.stringify(Array.from(this.tasks.entries()));
-      // 在实际环境中应该使用文件系统 API
-      // 这里暂时使用内存存储，后续可以集成数据库
+      // 保存到 IndexedDB（异步操作，不阻塞主流程）
+      const tasksArray = Array.from(this.tasks.entries());
+      // 使用 setTimeout 避免阻塞
+      setTimeout(async () => {
+        try {
+          await indexedDBStore.saveTasks(tasksArray);
+        } catch (error) {
+          console.error('保存任务到 IndexedDB 失败:', error);
+        }
+      }, 0);
     } catch (error) {
       console.error('保存任务失败:', error);
     }
@@ -230,10 +239,13 @@ class TaskManager {
   /**
    * 从存储加载
    */
-  private loadFromStorage(): void {
+  private async loadFromStorage(): Promise<void> {
     try {
-      // 在实际环境中应该从文件系统加载
-      // 这里暂时使用内存存储，后续可以集成数据库
+      const tasksData = await indexedDBStore.loadTasks();
+      if (tasksData && Array.isArray(tasksData)) {
+        this.tasks = new Map(tasksData);
+        console.log(`[TaskManager] 从 IndexedDB 加载了 ${this.tasks.size} 个任务`);
+      }
     } catch (error) {
       console.error('加载任务失败:', error);
     }

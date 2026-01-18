@@ -351,16 +351,19 @@ export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // 如果正在生成，且用户尝试关闭弹窗，则允许关闭（最小化）
+      // 如果用户尝试打开弹窗，且正在生成，则允许打开（查看进度）
+      setOpen(isOpen);
+    }}>
       <DialogTrigger asChild>
         <Button
           size="sm"
           variant="outline"
           className="w-full mb-2 border-purple-600 text-purple-600 hover:bg-purple-50"
-          disabled={generating}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          自动生成大纲
+          {generating ? '查看生成进度' : '自动生成大纲'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">

@@ -12,7 +12,7 @@
  */
 
 const DB_NAME = 'novel-editor-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // 增加版本号，触发升级以添加 TASKS 存储
 const CHUNK_SIZE = 1024 * 1024; // 1MB per chunk
 
 export interface StoredChunk {
@@ -29,6 +29,7 @@ class IndexedDBStore {
     CHAPTERS: 'chapters',
     ANALYSIS: 'analysis',
     SNAPSHOTS: 'snapshots',
+    TASKS: 'tasks', // 任务队列存储
   };
 
   /**
@@ -72,6 +73,11 @@ class IndexedDBStore {
         if (!db.objectStoreNames.contains(this.STORES.SNAPSHOTS)) {
           const snapshotStore = db.createObjectStore(this.STORES.SNAPSHOTS, { keyPath: 'timestamp' });
           snapshotStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        // 创建任务队列存储
+        if (!db.objectStoreNames.contains(this.STORES.TASKS)) {
+          db.createObjectStore(this.STORES.TASKS, { keyPath: 'taskId' });
         }
 
         console.log('[IndexedDB] 数据库结构创建完成');
@@ -612,6 +618,66 @@ class IndexedDBStore {
   }
 
   /**
+   * 保存任务队列数据
+   */
+  async saveTasks(tasks: [string, any][]): Promise<boolean> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.TASKS, 'readwrite');
+      const store = transaction.objectStore(this.STORES.TASKS);
+
+      // 清空旧数据
+      await new Promise<void>((resolve, reject) => {
+        const request = store.clear();
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      // 保存新数据
+      for (const [taskId, taskData] of tasks) {
+        await new Promise<void>((resolve, reject) => {
+          const request = store.put({
+            taskId,
+            taskData
+          });
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      console.log(`[IndexedDB] 保存了 ${tasks.length} 个任务`);
+      return true;
+    } catch (error) {
+      console.error('[IndexedDB] saveTasks 错误:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 加载任务队列数据
+   */
+  async loadTasks(): Promise<[string, any][]> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.TASKS, 'readonly');
+      const store = transaction.objectStore(this.STORES.TASKS);
+
+      const storedTasks: Array<{ taskId: string; taskData: any }> = await new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      const result: [string, any][] = storedTasks.map(item => [item.taskId, item.taskData]);
+      console.log(`[IndexedDB] 加载了 ${result.length} 个任务`);
+      return result;
+    } catch (error) {
+      console.error('[IndexedDB] loadTasks 错误:', error);
+      return [];
+    }
+  }
+
+  /**
    * 清空数据库
    */
   async clearAll(): Promise<boolean> {
@@ -629,7 +695,7 @@ class IndexedDBStore {
         });
       }
 
-      console.log('[IndexedDB] 数据库已清空');
+      console.log('[IndexedDB] 数据库已清空（包括任务队列）');
       return true;
     } catch (error) {
       console.error('[IndexedDB] clearAll 错误:', error);
