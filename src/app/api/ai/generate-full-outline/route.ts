@@ -15,8 +15,11 @@ export async function POST(request: NextRequest) {
       novelType: body.novelType,
       targetChapterCount: body.targetChapterCount,
       targetWordCount: body.targetWordCount,
-      coreIdea: body.coreIdea?.length || 0,
-      worldSettings: body.worldSettings?.length || 0,
+      protagonistName: body.protagonistName,
+      protagonistGender: body.protagonistGender,
+      storyMode: body.storyMode,
+      needVolumes: body.needVolumes,
+      volumeCount: body.volumeCount,
     });
 
     const {
@@ -24,9 +27,42 @@ export async function POST(request: NextRequest) {
       novelType = '玄幻',
       targetChapterCount = 100,
       targetWordCount = 3000,
-      coreIdea = '',
-      worldSettings = [],
-      characters = [],
+      // 主角设定
+      protagonistName = '',
+      protagonistGender = '男',
+      protagonistPersonality = '',
+      protagonistBackground = '',
+      protagonistAbility = '',
+      protagonistGoal = '',
+      // 世界观细节
+      worldBackground = '',
+      powerSystem = '',
+      geographicalEnvironment = '',
+      socialStructure = '',
+      coreConflict = '',
+      // 故事风格
+      narrativeStyle = '第三人称',
+      languageStyle = '简洁',
+      pacePreference = '适中',
+      // 主题与核心
+      coreTheme = '',
+      philosophicalThinking = '',
+      emotionalTone = '热血',
+      // 关键设定
+      goldenFinger = '',
+      keyItems = '',
+      importantLocations = '',
+      // 剧情结构
+      storyMode = '探险成长',
+      conflictType = '人魔对抗',
+      climaxSetting = '',
+      // 分卷规划
+      needVolumes = true,
+      volumeCount = 5,
+      // 禁忌设定
+      avoidElements = '',
+      avoidClichés = false,
+      // 其他要求
       customRequirements = '',
     } = body;
 
@@ -66,17 +102,39 @@ export async function POST(request: NextRequest) {
 【小说信息】
 - 标题：${title}
 - 类型：${novelType}
-- 核心创意：${coreIdea || '无'}
 - 章节目标：${targetChapterCount}章
 - 每章字数：${targetWordCount}字
 - 总字数目标：约${targetChapterCount * targetWordCount}字
+- 故事模式：${storyMode}
+- 冲突类型：${conflictType}
+
+【用户提供的设定】
+${worldBackground ? `- 世界背景：${worldBackground}` : ''}
+${powerSystem ? `- 力量体系：${powerSystem}` : ''}
+${geographicalEnvironment ? `- 地理环境：${geographicalEnvironment}` : ''}
+${socialStructure ? `- 社会结构：${socialStructure}` : ''}
+${coreConflict ? `- 核心冲突：${coreConflict}` : ''}
+${goldenFinger ? `- 金手指设定：${goldenFinger}` : ''}
+${keyItems ? `- 关键物品：${keyItems}` : ''}
+${importantLocations ? `- 重要地点：${importantLocations}` : ''}
+${climaxSetting ? `- 高潮设定：${climaxSetting}` : ''}
 
 【要求】
 1. 世界观必须适合长篇连载（${targetChapterCount}章）
 2. 必须包含：力量体系、地理环境、社会结构、历史背景、核心冲突
 3. 力量体系要有层次感，适合长期成长
 4. 世界观要有足够的扩展性，支撑长篇故事
-5. 避免套路化，要有创新点
+5. 如果用户提供了设定，必须基于用户设定进行完善和扩展
+6. 避免套路化，要有创新点
+7. 核心冲突要明确，能够推动长期剧情发展
+
+【写作规矩（严格遵守）】
+1. 全文禁止以感情线作为主线！
+2. 全文禁止以主角个人成长作为核心主线！
+3. 小说类型限定：玄幻、奇幻、科幻、仙侠、魔幻、异能、末世
+4. 避免华美空洞、流水账、套路化等AI写作弊端
+5. 确保内容紧凑、有悬念
+${avoidClichés ? '6. 避免常见套路（如：退婚、打脸、后宫等）' : ''}
 
 【输出格式】
 请以JSON格式输出：
@@ -148,15 +206,32 @@ export async function POST(request: NextRequest) {
 【小说信息】
 - 标题：${title}
 - 类型：${novelType}
-- 核心创意：${coreIdea || '无'}
+- 故事模式：${storyMode}
+- 情感基调：${emotionalTone}
 - 世界观：${JSON.stringify(worldContent.substring(0, 500))}
+
+【用户提供的设定】
+${protagonistName ? `- 主角姓名：${protagonistName}` : ''}
+${protagonistGender ? `- 主角性别：${protagonistGender}` : ''}
+${protagonistPersonality ? `- 主角性格：${protagonistPersonality}` : ''}
+${protagonistBackground ? `- 主角背景：${protagonistBackground}` : ''}
+${protagonistAbility ? `- 主角能力：${protagonistAbility}` : ''}
+${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 
 【要求】
 1. 设计3-5个主要人物（主角+2-4个重要配角）
-2. 每个人物要有鲜明的性格、背景、动机
-3. 人物关系要合理，符合剧情需要
-4. 避免套路化人物形象
-5. 人物成长轨迹要清晰
+2. 如果用户提供了主角设定，必须使用用户设定的主角信息
+3. 每个人物要有鲜明的性格、背景、动机
+4. 人物关系要合理，符合剧情需要
+5. 避免套路化人物形象
+6. 人物成长轨迹要清晰
+7. 人物目标必须服务于外部使命（如拯救世界、复仇、守护等），不能仅是个人成长
+
+【写作规矩（严格遵守）】
+1. 全文禁止以感情线作为主线！
+2. 全文禁止以主角个人成长作为核心主线！
+3. 人物的目标必须是外部使命，成长只是达成使命的手段
+4. 避免华美空洞、流水账、套路化等AI写作弊端
 
 【输出格式】
 请以JSON格式输出：
@@ -168,7 +243,7 @@ export async function POST(request: NextRequest) {
     "personality": "性格特点（50-100字）",
     "background": "背景故事（100-200字）",
     "abilities": "能力/特长（50-100字）",
-    "goals": "目标/动机（50-100字）",
+    "goals": "目标/动机（50-100字，必须是外部使命）",
     "weaknesses": "弱点/缺陷（30-50字）",
     "relationships": "人物关系（50-100字）"
   }
@@ -241,11 +316,24 @@ export async function POST(request: NextRequest) {
 【小说信息】
 - 标题：${title}
 - 类型：${novelType}
-- 核心创意：${coreIdea || '无'}
 - 章节目标：${targetChapterCount}章
 - 每章字数：${targetWordCount}字
+- 叙事风格：${narrativeStyle}
+- 语言风格：${languageStyle}
+- 节奏偏好：${pacePreference}
+- 故事模式：${storyMode}
+- 冲突类型：${conflictType}
+- 情感基调：${emotionalTone}
+- ${needVolumes ? `分卷规划：需要分成${volumeCount}卷` : '分卷规划：不需要分卷'}
 - 世界观：${worldContent.substring(0, 300)}
 - 主要人物：${JSON.stringify(characterContent.substring(0, 300))}
+
+【主题设定】
+${coreTheme ? `- 核心主题：${coreTheme}` : ''}
+${philosophicalThinking ? `- 哲学思考：${philosophicalThinking}` : ''}
+
+【用户提供的设定】
+${climaxSetting ? `- 高潮设定：${climaxSetting}` : ''}
 
 【要求】
 1. 故事要有明确的开端、发展、高潮、结局
@@ -253,6 +341,19 @@ export async function POST(request: NextRequest) {
 3. 必须包含：起因、主要冲突、转折点、高潮、结局
 4. 避免套路化剧情，要有创新点
 5. 保持剧情的连贯性和吸引力
+6. 根据故事模式调整剧情结构（探险成长、复仇、守护、争霸、解谜、生存、创造）
+7. 主线必须围绕外部使命（拯救世界、复仇、守护重要事物等），禁止以感情线或个人成长为主线
+8. ${needVolumes ? `剧情要合理分配到${volumeCount}卷中，每卷要有独立的起承转合` : '剧情结构要完整'}
+9. ${avoidElements ? `避免以下元素：${avoidElements}` : ''}
+
+【写作规矩（严格遵守）】
+1. 全文禁止以感情线作为主线！
+2. 全文禁止以主角个人成长作为核心主线！
+3. 主角的一切成长和变强必须是为了完成外部使命的手段和工具
+4. 小说类型限定：玄幻、奇幻、科幻、仙侠、魔幻、异能、末世
+5. 避免华美空洞、流水账、套路化等AI写作弊端
+6. 确保内容紧凑、有悬念
+${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）' : ''}
 
 【输出格式】
 请以JSON格式输出：
@@ -334,11 +435,33 @@ export async function POST(request: NextRequest) {
 【小说信息】
 - 标题：${title}
 - 类型：${novelType}
-- 核心创意：${coreIdea || '无'}
 - 总章节数：${targetChapterCount}章
 - 当前批次：第${startChapter}-${endChapter}章（共${chaptersInBatch}章）
 - 每章字数：${targetWordCount}字
+- 叙事风格：${narrativeStyle}
+- 语言风格：${languageStyle}
+- 节奏偏好：${pacePreference}
+- 故事模式：${storyMode}
+- 冲突类型：${conflictType}
+- 情感基调：${emotionalTone}
+- ${needVolumes ? `分卷规划：需要分成${volumeCount}卷` : '分卷规划：不需要分卷'}
 - 整体大纲：${JSON.stringify(storyData)}
+
+【主题设定】
+${coreTheme ? `- 核心主题：${coreTheme}` : ''}
+${philosophicalThinking ? `- 哲学思考：${philosophicalThinking}` : ''}
+
+【主要人物】
+- 主角：${protagonistName || '未命名'}
+${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
+
+【关键设定】
+${goldenFinger ? `- 金手指：${goldenFinger}` : ''}
+${keyItems ? `- 关键物品：${keyItems}` : ''}
+${importantLocations ? `- 重要地点：${importantLocations}` : ''}
+
+【分卷信息】
+${needVolumes ? `当前批次属于第${Math.ceil(startChapter / (targetChapterCount / volumeCount))}卷` : '当前批次为单卷结构'}
 
 【要求】
 1. 每章要有独立的章节标题（吸引人，符合${novelType}类型）
@@ -347,13 +470,21 @@ export async function POST(request: NextRequest) {
 4. 每章都要有冲突、转折或悬念
 5. 注意：第${startChapter}章是这一批的开始，要注意承接上一批的剧情
 6. 最后一批要为结局做好铺垫
+7. ${needVolumes ? `当前批次要符合第${Math.ceil(startChapter / (targetChapterCount / volumeCount))}卷的主题和结构` : '保持整体结构完整'}
+8. 语言风格要符合${languageStyle}风格
+9. 节奏要符合${pacePreference}要求
+10. ${avoidElements ? `避免以下元素：${avoidElements}` : ''}
 
 【写作规矩（严格遵守）】
 1. 全文禁止以感情线作为主线！
 2. 全文禁止以主角个人成长作为核心主线！
-3. 小说类型限定：玄幻、奇幻、科幻、仙侠、魔幻、异能、末世
-4. 避免华美空洞、流水账、套路化等AI写作弊端
-5. 确保内容紧凑、有悬念
+3. 主角的一切成长和变强必须是为了完成外部使命的手段和工具
+4. 主角的目标必须是外部使命（如拯救世界、复仇、守护重要事物等）
+5. 小说类型限定：玄幻、奇幻、科幻、仙侠、魔幻、异能、末世
+6. 避免华美空洞、流水账、套路化等AI写作弊端
+7. 确保内容紧凑、有悬念
+${avoidClichés ? '8. 避免常见套路（如：退婚、打脸、后宫等）' : ''}
+${customRequirements ? `9. 其他要求：${customRequirements}` : ''}
 
 【输出格式】
 请以JSON格式输出（${chaptersInBatch}章）：
