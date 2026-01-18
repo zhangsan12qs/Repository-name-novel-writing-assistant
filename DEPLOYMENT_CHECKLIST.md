@@ -1,143 +1,72 @@
-# Vercel 部署检查清单
+# 部署检查清单
 
-## ✅ 项目准备状态
+## ✅ 已完成
+- [x] 硅基流动 API 密钥管理组件已创建
+- [x] API 密钥客户端已创建
+- [x] AI 配置工具已创建
+- [x] 所有 AI API 路由已更新
+- [x] 代码已提交并推送到 GitHub
 
-### 代码仓库
-- ✅ GitHub 仓库已创建
-- ✅ 代码已推送到 GitHub（最新提交：9e7d60e）
-- ✅ 远程仓库地址：https://github.com/zhangsan12qs/Repository-name-novel-writing-assistant
+## 🚀 部署步骤（自动进行）
 
-### 项目配置
-- ✅ package.json 配置正确
-- ✅ 构建脚本：`bash ./scripts/build.sh` → `npx next build`
-- ✅ 启动脚本：`bash ./scripts/start.sh` → `npx next start --port 5000`
-- ✅ .coze 配置文件正确
+### 1. Vercel 自动检测
+- Vercel 会自动检测到 GitHub 仓库的新提交（cd76ad9）
+- 自动触发新的部署流程
+- 通常需要 2-5 分钟完成部署
 
-### Vercel 配置
-- ✅ vercel.json 已创建
-- ✅ .vercelignore 已创建
-- ✅ 框架设置为 Next.js
+### 2. 查看部署状态
+访问以下地址查看部署进度：
+- Vercel Dashboard: https://vercel.com/dashboard
+- 选择你的项目，查看最新部署状态
 
-### 环境变量
-需要配置的环境变量：
-- NODE_ENV = production
-- PORT = 5000
+### 3. 部署完成后
+- 访问你的应用 URL（例如：https://your-app.vercel.app）
+- 左侧边栏会出现 "API 设置" 按钮（蓝色渐变主题）
+- 点击按钮输入你的硅基流动 API Key
 
-### 文档
-- ✅ VERCEL_DEPLOYMENT_STEPS.md（5分钟快速部署）
-- ✅ STEP2_VERCEL_GUIDE.md（详细部署指南）
-- ✅ VERCEL_QUICK_START.md（快速开始）
+## 📝 使用新功能
 
----
+### 配置硅基流动 API Key
+1. 打开应用后，在左侧边栏找到 "API 设置" 按钮
+2. 点击按钮打开 API 密钥配置对话框
+3. 输入你的硅基流动 API Key（格式：sk-xxxxxxxxxxxxx）
+4. 点击保存
 
-## 📋 部署前检查
+### 获取硅基流动 API Key
+1. 访问 https://siliconflow.cn/
+2. 注册/登录账号
+3. 进入 "API 密钥" 页面
+4. 创建新的 API Key
+5. 复制 API Key（格式：sk-开头）
 
-### 1. 检查 GitHub 仓库
-```bash
-# 确认远程仓库
-git remote -v
+### 功能优势
+- ✅ 无需配置环境变量
+- ✅ 支持用户自定义 AI 服务
+- ✅ 密钥保存在浏览器 localStorage
+- ✅ 部署后立即可以使用 AI 功能
 
-# 确认最新代码已推送
-git log --oneline -1
-# 应显示：9e7d60e 创建 Vercel 部署指南，包含快速开始和详细说明
-```
+## 🔍 验证部署成功
 
-### 2. 检查项目文件
-```bash
-# 确认关键文件存在
-ls -la vercel.json
-ls -la .vercelignore
-ls -la package.json
-```
+### 检查清单
+- [ ] 应用可以正常访问
+- [ ] 左侧边栏显示 "API 设置" 按钮
+- [ ] 点击按钮可以打开配置对话框
+- [ ] 可以输入并保存 API Key
+- [ ] 保存后可以正常使用 AI 功能（续写、生成等）
 
-### 3. 检查构建脚本
-```bash
-# 测试构建脚本是否正常
-bash scripts/build.sh
-```
+### 常见问题
 
----
+#### Q1: 部署后找不到 "API 设置" 按钮？
+A: 清除浏览器缓存，刷新页面，确保访问的是最新部署版本。
 
-## 🚀 部署步骤
+#### Q2: 保存 API Key 后 AI 功能仍不可用？
+A: 检查 API Key 是否正确（sk-开头），确保账户有足够的余额。
 
-### 第一步：访问 Vercel
-1. 打开浏览器，访问：https://vercel.com
-2. 使用 GitHub 账号登录
+#### Q3: 部署失败怎么办？
+A: 访问 Vercel Dashboard 查看部署日志，检查是否有错误信息。
 
-### 第二步：导入项目
-1. 点击 "Add New" → "Project"
-2. 找到仓库：`Repository-name-novel-writing-assistant`
-3. 点击 "Import"
-
-### 第三步：配置项目
-1. **Project Name**: `novel-writing-assistant`
-2. **Framework**: Next.js（自动检测）
-3. **Root Directory**: `./`（默认）
-4. **Environment Variables**:
-   - NODE_ENV = production
-   - PORT = 5000
-
-### 第四步：部署
-1. 点击 "Deploy"
-2. 等待 1-3 分钟
-3. 部署成功！
-
-### 第五步：访问应用
-- 访问：`https://novel-writing-assistant.vercel.app`
-- 或点击 Vercel 上的 "Visit" 按钮
-
----
-
-## ✅ 部署后验证
-
-### 1. 检查应用是否正常运行
-- [ ] 页面正常加载
-- [ ] 可以创建新章节
-- [ ] 可以激活卡密
-- [ ] 可以使用 AI 写作功能
-
-### 2. 检查环境变量
-- [ ] NODE_ENV = production
-- [ ] PORT = 5000
-
-### 3. 检查部署日志
-- [ ] 构建成功
-- [ ] 无错误日志
-- [ ] 启动成功
-
----
-
-## 🎉 部署完成！
-
-你的应用已成功部署到 Vercel！
-
-### 应用信息
-- **域名**: `https://novel-writing-assistant.vercel.app`
-- **框架**: Next.js 16
-- **运行环境**: Vercel Platform
-
-### 分享应用
-你可以将应用分享给其他人：
-- 分享链接：`https://novel-writing-assistant.vercel.app`
-- 用户可以直接访问使用
-
-### 自动更新
-当你推送新代码时，Vercel 会自动重新部署：
-```bash
-git add .
-git commit -m "feat: 新功能"
-git push origin main
-```
-
----
-
-## 📞 需要帮助？
-
-如果遇到问题：
-1. 查看 VERCEL_DEPLOYMENT_STEPS.md
-2. 查看 STEP2_VERCEL_GUIDE.md
-3. 查看 Vercel 官方文档：https://vercel.com/docs
-
----
-
-**祝你部署成功！🎉**
+## 📞 技术支持
+如遇到问题，请检查：
+1. Vercel 部署日志
+2. 浏览器控制台错误信息
+3. API Key 是否有效
