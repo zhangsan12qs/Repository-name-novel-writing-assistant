@@ -54,13 +54,15 @@ import {
   Network,
   Wrench,
   XCircle,
-  Download
+  Download,
+  Lock
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
 import ThankAuthorButton from '@/components/thank-author-button';
 import AutoOutlineDialog from '@/components/auto-outline-dialog';
+import ApiKeySettings from '@/components/api-key-settings';
 
 // 防抖函数
 function useDebounce<T>(value: T, delay: number): T {
@@ -258,6 +260,9 @@ export default function NovelEditor() {
   const [exportOption, setExportOption] = useState<'current' | 'all' | 'range'>('current');
   const [exportStartChapter, setExportStartChapter] = useState<number>(1);
   const [exportEndChapter, setExportEndChapter] = useState<number>(1);
+
+  // API 设置对话框状态
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
 
   // 按钮loading状态管理器 - 提供即时反馈
   const [buttonLoading, setButtonLoading] = useState<{[key: string]: boolean}>({});
@@ -1810,6 +1815,12 @@ ${data.story.ending || ''}`;
         endpoint = '/api/ai/polish';
         body.style = aiPrompt || '简洁明快';
         body.articleRequirements = articleRequirements;
+      }
+
+      // 添加 API Key（如果有）
+      const savedApiKey = localStorage.getItem('siliconflow_api_key');
+      if (savedApiKey) {
+        body.apiKey = savedApiKey;
       }
 
       const response = await fetch(endpoint, {
@@ -4233,6 +4244,18 @@ ${data.story.ending || ''}`;
         {/* 感谢作者 - 独立显示，不属于任何阶段 */}
         <Card className="p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-pink-200 dark:border-pink-800">
           <ThankAuthorButton />
+        </Card>
+
+        {/* API 设置 - 独立显示 */}
+        <Card className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
+            onClick={() => setApiKeyDialogOpen(true)}
+          >
+            <Lock className="h-4 w-4 mr-2" />
+            API 密钥设置
+          </Button>
         </Card>
 
         {/* 分隔线 */}
@@ -8483,6 +8506,12 @@ ${data.story.ending || ''}`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* API 密钥设置对话框 */}
+      <ApiKeySettings
+        open={apiKeyDialogOpen}
+        onOpenChange={setApiKeyDialogOpen}
+      />
     </div>
   );
 }
