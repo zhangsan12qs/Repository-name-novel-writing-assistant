@@ -4042,8 +4042,8 @@ ${data.story.ending || ''}`;
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* 左侧导航栏 */}
-      <div className="w-72 border-r bg-card p-4 overflow-y-auto max-h-screen">
+      {/* 左侧导航栏 - 使用 sticky 定位，跟随滚动 */}
+      <div className="w-72 border-r bg-card p-4 sticky top-0 h-screen overflow-y-auto">
         {/* 头部 */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
