@@ -3345,6 +3345,11 @@ ${data.story.ending || ''}`;
     }
   };
 
+  // 获取当前活动的自动生成大纲任务
+  const activeOutlineTask = useMemo(() => {
+    return tasks.find(t => t.type === 'auto-generate-outline' && ['processing', 'paused'].includes(t.status)) || null;
+  }, [tasks]);
+
   const handlePauseTask = async (taskId: string) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}/pause`, {
@@ -4138,7 +4143,10 @@ ${data.story.ending || ''}`;
             </div>
 
             {/* 自动生成大纲 */}
-            <AutoOutlineDialog onGenerateComplete={handleAutoOutlineComplete} />
+            <AutoOutlineDialog
+              onGenerateComplete={handleAutoOutlineComplete}
+              activeTask={activeOutlineTask}
+            />
 
             {/* 核心写作规则 */}
             <Card className="p-2 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,17 @@ import { Sparkles, Loader2, CheckCircle, BookOpen, Users, Globe, FileText, User,
 
 interface Props {
   onGenerateComplete: (data: any) => void;
+  activeTask?: {
+    id: string;
+    status: string;
+    progress?: {
+      currentStep: string;
+      currentChapter?: number;
+      totalChapters: number;
+      percentage: number;
+      message: string;
+    };
+  } | null;
 }
 
 // 动态参数预览组件
@@ -151,7 +162,7 @@ function CollapsibleSection({
   );
 }
 
-export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
+export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Props) {
   const [open, setOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({
@@ -159,6 +170,38 @@ export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
     percentage: 0,
     message: ''
   });
+
+  // 监听任务状态变化，如果任务被删除或取消，重置生成状态
+  useEffect(() => {
+    if (generating) {
+      // 如果正在生成，但任务不存在或状态不是进行中/暂停，则重置
+      if (!activeTask || !['processing', 'paused'].includes(activeTask.status)) {
+        console.log('[AutoOutline] 任务状态变化，重置生成状态', activeTask);
+        setGenerating(false);
+        setProgress({
+          phase: '',
+          percentage: 0,
+          message: ''
+        });
+        setGeneratedData(null);
+        // 如果对话框打开且任务被删除，自动关闭
+        if (!activeTask && open) {
+          setOpen(false);
+        }
+      }
+    } else {
+      // 如果没有生成，但有进行中的任务，则恢复生成状态
+      if (activeTask && ['processing', 'paused'].includes(activeTask.status)) {
+        console.log('[AutoOutline] 恢复生成状态', activeTask);
+        setGenerating(true);
+        setProgress({
+          phase: activeTask.progress?.message || '进行中',
+          percentage: activeTask.progress?.percentage || 0,
+          message: activeTask.progress?.message || '任务进行中...'
+        });
+      }
+    }
+  }, [activeTask, generating, open]);
 
   const [formData, setFormData] = useState({
     // 基础信息
