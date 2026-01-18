@@ -3442,7 +3442,7 @@ ${data.story.ending || ''}`;
   // 实时刷新任务列表
   useEffect(() => {
     fetchTasks();
-    const interval = setInterval(fetchTasks, 5000); // 每5秒刷新一次
+    const interval = setInterval(fetchTasks, 2000); // 每2秒刷新一次，确保进度及时更新
     return () => clearInterval(interval);
   }, []);
 

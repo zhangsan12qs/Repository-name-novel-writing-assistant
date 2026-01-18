@@ -361,6 +361,14 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
               if (data.success) {
                 // 完成信号
                 console.log('[AutoOutline] 生成完成，共', allChapters.length, '章');
+
+                // 先更新进度到 100%
+                setProgress({
+                  phase: '完成',
+                  percentage: 100,
+                  message: '生成完成！'
+                });
+
                 const finalData = {
                   world: worldData,
                   characters: characterData,
@@ -371,7 +379,11 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
 
                 setGeneratedData(finalData);
                 onGenerateComplete(finalData);
-                setGenerating(false);
+
+                // 稍微延迟一下再停止生成状态，让用户看到 100%
+                setTimeout(() => {
+                  setGenerating(false);
+                }, 500);
               }
 
               if (data.error) {
