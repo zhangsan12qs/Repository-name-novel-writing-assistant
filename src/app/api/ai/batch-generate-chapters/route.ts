@@ -5,7 +5,7 @@ import { checkContentPenaltiesSmart, PenaltyLevel, getPenaltyMessage } from '@/l
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 1800; // 30分钟超时
+export const maxDuration = 300; // 5分钟超时（Vercel 免费计划限制）
 
 // 生成惩罚提示文本
 function generatePenaltyPrompt(): string {
