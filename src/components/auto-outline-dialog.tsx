@@ -381,7 +381,18 @@ export default function AutoOutlineDialog({ onGenerateComplete }: Props) {
               <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-lg font-semibold">{progress.phase}</span>
-                  <span className="text-2xl font-bold text-purple-600">{progress.percentage}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-purple-600">{progress.percentage}%</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setOpen(false)}
+                      className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-100"
+                      title="最小化到任务队列"
+                    >
+                      <Activity className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                   <div

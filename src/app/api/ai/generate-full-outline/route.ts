@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { taskManager } from '@/lib/task-manager';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -7,6 +8,8 @@ export const maxDuration = 300; // 5分钟超时（Vercel 免费计划限制）
 
 export async function POST(request: NextRequest) {
   console.log('[GenerateFullOutline] ========== 开始生成完整大纲 ==========');
+
+  let taskId: string | null = null;
 
   try {
     const body = await request.json();
@@ -65,6 +68,21 @@ export async function POST(request: NextRequest) {
       // 其他要求
       customRequirements = '',
     } = body;
+
+    // ========== 创建任务 ==========
+    const task = taskManager.createTask({
+      type: 'auto-generate-outline',
+      name: `生成完整大纲：${title}`,
+      priority: 10,
+      title,
+      novelType,
+      targetChapterCount,
+      targetWordCount,
+    });
+    taskId = task.id;
+    console.log('[GenerateFullOutline] 已创建任务:', taskId);
+
+    taskManager.updateStatus(taskId, 'processing');
 
     // ========== 动态计算参数（根据章节数量调整） ==========
     // 人物数量：根据章节数量动态调整
@@ -164,6 +182,12 @@ export async function POST(request: NextRequest) {
     // 创建流式响应
     const encoder = new TextEncoder();
 
+    // 数据变量（在外部定义，以便任务更新时使用）
+    let worldContent = '';
+    let characterData: any[] = [];
+    let storyData: any = null;
+    let storyContent = '';
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -175,6 +199,14 @@ export async function POST(request: NextRequest) {
             percentage: 5,
             message: '正在生成世界观设定...'
           })}\n\n`));
+
+          if (taskId) {
+            taskManager.updateProgress(taskId, {
+              currentStep: 'generating-world-settings',
+              percentage: 5,
+              message: '正在生成世界观设定...'
+            });
+          }
 
           const worldPrompt = `你是一位专业的网文编辑，擅长${novelType}类型小说的世界观构建。
 
@@ -230,7 +262,6 @@ ${avoidClichés ? '6. 避免常见套路（如：退婚、打脸、后宫等）'
   "innovations": "创新点（100-200字）"
 }`;
 
-          let worldContent = '';
           try {
             const worldStream = client.stream([
               { role: 'user', content: worldPrompt }
@@ -279,6 +310,14 @@ ${avoidClichés ? '6. 避免常见套路（如：退婚、打脸、后宫等）'
             percentage: 15,
             message: '正在生成主要人物...'
           })}\n\n`));
+
+          if (taskId) {
+            taskManager.updateProgress(taskId, {
+              currentStep: 'generating-characters',
+              percentage: 15,
+              message: '正在生成主要人物...'
+            });
+          }
 
           const characterPrompt = `你是一位专业的网文编辑，擅长${novelType}类型小说的人物设计。
 
@@ -405,6 +444,14 @@ ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
             message: '正在生成故事主线...'
           })}\n\n`));
 
+          if (taskId) {
+            taskManager.updateProgress(taskId, {
+              currentStep: 'generating-detailed-outline',
+              percentage: 20,
+              message: '正在生成故事主线...'
+            });
+          }
+
           // 先生成整体故事大纲
           const storyPrompt = `你是一位专业的网文编辑，擅长${novelType}类型小说的剧情规划。
 
@@ -476,9 +523,6 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
   "ending": "结局（100-200字）"
 }`;
 
-          let storyContent = '';
-          let storyData: any = null;  // 定义在外部
-
           try {
             const storyStream = client.stream([
               { role: 'user', content: storyPrompt }
@@ -536,6 +580,16 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
               percentage: percentage,
               message: `正在生成第${startChapter}-${endChapter}章概要...`
             })}\n\n`));
+
+            if (taskId) {
+              taskManager.updateProgress(taskId, {
+                currentStep: 'generating-chapters',
+                currentChapter: startChapter,
+                totalChapters: targetChapterCount,
+                percentage: percentage,
+                message: `正在生成第${startChapter}-${endChapter}章概要...`
+              });
+            }
 
             // 生成这一批的章节概要
             const chapterPrompt = `你是一位专业的网文编辑，擅长${novelType}类型小说的章节规划。
@@ -692,6 +746,20 @@ ${customRequirements ? `9. 其他要求：${customRequirements}` : ''}
             message: '大纲生成完成！'
           })}\n\n`));
 
+          if (taskId) {
+            taskManager.updateStatus(taskId, 'completed');
+            taskManager.updateProgress(taskId, {
+              percentage: 100,
+              message: '大纲生成完成！'
+            });
+            taskManager.updateResult(taskId, {
+              characters: characterData,
+              worldSettings: [worldContent],
+              outline: storyContent,
+              chapters: allChapters
+            });
+          }
+
           controller.enqueue(encoder.encode(`event:complete\n`));
           controller.enqueue(encoder.encode(`data:${JSON.stringify({
             success: true,
@@ -703,6 +771,11 @@ ${customRequirements ? `9. 其他要求：${customRequirements}` : ''}
 
         } catch (error: any) {
           console.error('[GenerateFullOutline] 生成过程出错:', error);
+
+          if (taskId) {
+            taskManager.updateStatus(taskId, 'failed', error.message || '生成失败');
+          }
+
           controller.enqueue(encoder.encode(`event:error\n`));
           controller.enqueue(encoder.encode(`data:${JSON.stringify({
             error: error.message || '生成失败'
