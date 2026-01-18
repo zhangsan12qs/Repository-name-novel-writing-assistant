@@ -261,7 +261,7 @@ export default function NovelEditor() {
   const [exportStartChapter, setExportStartChapter] = useState<number>(1);
   const [exportEndChapter, setExportEndChapter] = useState<number>(1);
 
-  // API 设置对话框状态
+  // 大模型配置对话框状态
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
 
   // 按钮loading状态管理器 - 提供即时反馈
@@ -4265,8 +4265,8 @@ ${data.story.ending || ''}`;
             className="w-full justify-start text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
             onClick={() => setApiKeyDialogOpen(true)}
           >
-            <Lock className="h-4 w-4 mr-2" />
-            API 密钥设置
+            <Sparkles className="h-4 w-4 mr-2" />
+            大模型配置
           </Button>
         </Card>
 
@@ -8519,7 +8519,7 @@ ${data.story.ending || ''}`;
         </DialogContent>
       </Dialog>
 
-      {/* API 密钥设置对话框 */}
+      {/* 大模型配置对话框 */}
       <ApiKeySettings
         open={apiKeyDialogOpen}
         onOpenChange={setApiKeyDialogOpen}
