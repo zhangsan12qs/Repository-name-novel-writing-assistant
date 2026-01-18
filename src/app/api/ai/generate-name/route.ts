@@ -258,8 +258,10 @@ ${region ? `- 地域特色：${region}` : ''}
       ];
 
       const response = await siliconClient.streamChat(messages, {
+        model: 'deepseek-ai/DeepSeek-V3',
         temperature: 0.8,
         maxTokens: 2000,
+        topP: 0.9,
       });
 
       // 硅基流动返回的是流式数据，这里我们收集所有内容

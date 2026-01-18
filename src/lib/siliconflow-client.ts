@@ -44,12 +44,15 @@ export class SiliconFlowClient {
       topP?: number;
     } = {}
   ): AsyncGenerator<string, void, unknown> {
+    // 优先使用传入的参数，否则使用默认值
     const {
       model = 'deepseek-ai/DeepSeek-V3',
-      temperature = 0.7,
+      temperature = 0.8,
       maxTokens = 2000,
       topP = 0.9,
     } = options;
+
+    console.log('[SiliconFlow] 调用参数:', { model, temperature, maxTokens, topP });
 
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
@@ -126,7 +129,7 @@ export class SiliconFlowClient {
   ): Promise<string> {
     const {
       model = 'deepseek-ai/DeepSeek-V3',
-      temperature = 0.7,
+      temperature = 0.8,
       maxTokens = 2000,
       topP = 0.9,
     } = options;

@@ -1825,10 +1825,17 @@ ${data.story.ending || ''}`;
         body.articleRequirements = articleRequirements;
       }
 
-      // 添加 API Key（如果有）
+      // 添加 API Key 和模型配置（如果有）
       const savedApiKey = localStorage.getItem('siliconflow_api_key');
       if (savedApiKey) {
         body.apiKey = savedApiKey;
+        // 添加用户配置的模型参数
+        body.modelConfig = {
+          model: localStorage.getItem('siliconflow_model') || 'deepseek-ai/DeepSeek-V3',
+          temperature: parseFloat(localStorage.getItem('siliconflow_temperature') || '0.8'),
+          maxTokens: parseInt(localStorage.getItem('siliconflow_maxTokens') || '2000'),
+          topP: parseFloat(localStorage.getItem('siliconflow_topP') || '0.9'),
+        };
       }
 
       const response = await fetch(endpoint, {

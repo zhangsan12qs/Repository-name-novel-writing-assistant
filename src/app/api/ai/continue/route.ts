@@ -5,7 +5,7 @@ import { getApiKey } from '@/lib/ai-config';
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, context, articleRequirements, apiKey } = await request.json();
+    const { content, context, articleRequirements, apiKey, modelConfig } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -32,6 +32,14 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // 获取模型配置（如果有）
+    const config = modelConfig || {
+      model: 'deepseek-ai/DeepSeek-V3',
+      temperature: 0.8,
+      maxTokens: 2000,
+      topP: 0.9,
+    };
 
     const systemPrompt = `你是一位专业的网络小说写作助手。你的任务是：
 1. 基于给定的小说内容，自然地续写接下来的段落
@@ -92,8 +100,10 @@ ${context ? `\n背景信息：${context}` : ''}`;
         async start(controller) {
           try {
             for await (const chunk of siliconClient.streamChat(messages, {
-              temperature: 0.8,
-              maxTokens: 2000,
+              model: config.model,
+              temperature: config.temperature,
+              maxTokens: config.maxTokens,
+              topP: config.topP,
             })) {
               controller.enqueue(encoder.encode(chunk));
             }
