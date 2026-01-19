@@ -57,7 +57,8 @@ import {
   Download,
   Lock,
   RotateCcw,
-  X
+  X,
+  Video
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 // 导入性能监控工具
@@ -4465,6 +4466,18 @@ ${data.story.ending || ''}`;
             <Badge className="ml-auto bg-green-500 hover:bg-green-600 text-[10px]" variant="secondary">
               免费
             </Badge>
+          </Button>
+        </Card>
+
+        {/* 视频介绍 - 独立显示 */}
+        <Card className="p-2 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 h-8 text-xs"
+            onClick={() => window.open('/video-intro', '_blank')}
+          >
+            <Video className="h-3.5 w-3.5 mr-2" />
+            视频介绍
           </Button>
         </Card>
 
