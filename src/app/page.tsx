@@ -63,6 +63,7 @@ import { indexedDBStore } from '@/lib/indexeddb-store';
 import ThankAuthorButton from '@/components/thank-author-button';
 import AutoOutlineDialog from '@/components/auto-outline-dialog';
 import ApiKeySettings from '@/components/api-key-settings';
+import MusicPlayer from '@/components/music-player';
 
 // 防抖函数
 function useDebounce<T>(value: T, delay: number): T {
@@ -8547,6 +8548,9 @@ ${data.story.ending || ''}`;
         open={apiKeyDialogOpen}
         onOpenChange={setApiKeyDialogOpen}
       />
+
+      {/* 音乐播放器 */}
+      <MusicPlayer />
     </div>
   );
 }
