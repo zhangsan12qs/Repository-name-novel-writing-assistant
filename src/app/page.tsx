@@ -55,7 +55,9 @@ import {
   Wrench,
   XCircle,
   Download,
-  Lock
+  Lock,
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 // 导入性能监控工具
@@ -288,6 +290,14 @@ export default function NovelEditor() {
 
   // 大模型配置对话框状态
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+
+  // 版本历史相关状态
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [chapterVersions, setChapterVersions] = useState<any[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
+
+  // 专注模式状态
+  const [focusMode, setFocusMode] = useState(false);
 
   // 按钮loading状态管理器 - 提供即时反馈
   const [buttonLoading, setButtonLoading] = useState<{[key: string]: boolean}>({});
@@ -841,6 +851,93 @@ ${data.story.ending || ''}`;
     );
     // 不在这里直接调用checkIssues，改为使用防抖后的版本
   };
+
+  // 版本历史相关函数
+  const saveVersion = async (note?: string) => {
+    if (!currentChapter) return;
+
+    try {
+      const versionId = await indexedDBStore.saveChapterVersion(
+        currentChapter.id,
+        currentChapter.content || '',
+        note
+      );
+      console.log('[版本历史] 版本已保存:', versionId);
+      return versionId;
+    } catch (error) {
+      console.error('[版本历史] 保存版本失败:', error);
+      return null;
+    }
+  };
+
+  const loadVersions = async () => {
+    if (!currentChapter) return;
+
+    try {
+      setLoadingVersions(true);
+      const versions = await indexedDBStore.getChapterVersions(currentChapter.id);
+      setChapterVersions(versions);
+      console.log(`[版本历史] 加载了 ${versions.length} 个版本`);
+    } catch (error) {
+      console.error('[版本历史] 加载版本失败:', error);
+      setChapterVersions([]);
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  const restoreVersion = async (versionId: string) => {
+    if (!currentChapter) return;
+
+    try {
+      const version = await indexedDBStore.getVersion(versionId);
+      if (!version) {
+        console.error('[版本历史] 未找到版本:', versionId);
+        return;
+      }
+
+      // 保存当前状态作为新版本
+      await saveVersion('恢复前的版本');
+
+      // 恢复到指定版本
+      updateChapterContent(version.content);
+      console.log(`[版本历史] 已恢复到版本: ${versionId}`);
+      setVersionHistoryOpen(false);
+    } catch (error) {
+      console.error('[版本历史] 恢复版本失败:', error);
+    }
+  };
+
+  const deleteVersion = async (versionId: string) => {
+    try {
+      const success = await indexedDBStore.deleteVersion(versionId);
+      if (success) {
+        // 重新加载版本列表
+        await loadVersions();
+      }
+    } catch (error) {
+      console.error('[版本历史] 删除版本失败:', error);
+    }
+  };
+
+  // 打开版本历史面板时自动加载
+  useEffect(() => {
+    if (versionHistoryOpen && currentChapter) {
+      loadVersions();
+    }
+  }, [versionHistoryOpen, currentChapter?.id]);
+
+  // 定时自动保存版本（每10分钟）
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (currentChapter && currentChapter.content) {
+        saveVersion('自动保存');
+        console.log('[版本历史] 已自动保存版本');
+      }
+    }, 10 * 60 * 1000); // 10分钟
+
+    return () => clearInterval(interval);
+  }, [currentChapter?.id]);
 
   // 为问题检测添加防抖 - 使用useMemo缓存结果（性能优化版）
   // 根据章节数量动态调整防抖时间
@@ -4267,8 +4364,10 @@ ${data.story.ending || ''}`;
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* 左侧导航栏 - 使用 sticky 定位，跟随滚动 */}
-      <div className="w-52 border-r bg-card p-3 sticky top-0 h-screen overflow-y-auto">
+      {/* 专注模式时隐藏侧边栏 */}
+      {!focusMode && (
+        /* 左侧导航栏 - 使用 sticky 定位，跟随滚动 */
+        <div className="w-52 border-r bg-card p-3 sticky top-0 h-screen overflow-y-auto">
         {/* 头部 */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
@@ -5035,6 +5134,7 @@ ${data.story.ending || ''}`;
 
         </div>
       </div>
+      )}
 
       {/* 主编辑区域 */}
       <div className="flex-1 flex flex-col">
@@ -5100,6 +5200,34 @@ ${data.story.ending || ''}`;
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setVersionHistoryOpen(true)}
+                disabled={!currentChapter || !currentChapter.id}
+                className="h-8 text-xs"
+              >
+                <History className="h-3.5 w-3.5 mr-1" />
+                版本历史
+              </Button>
+              <Button
+                variant={focusMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFocusMode(!focusMode)}
+                className={focusMode ? "h-8 text-xs bg-purple-600 hover:bg-purple-700" : "h-8 text-xs"}
+              >
+                {focusMode ? (
+                  <>
+                    <X className="h-3.5 w-3.5 mr-1" />
+                    退出专注
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3.5 w-3.5 mr-1" />
+                    专注模式
+                  </>
+                )}
+              </Button>
             </div>
 
 
@@ -5196,6 +5324,17 @@ ${data.story.ending || ''}`;
                   placeholder="开始写作..."
                   className="min-h-[500px] resize-none font-mono text-sm leading-relaxed"
                 />
+
+                {/* 专注模式浮动按钮 */}
+                {focusMode && (
+                  <Button
+                    onClick={() => setFocusMode(false)}
+                    className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"
+                  >
+                    <X className="h-5 w-5 mr-2" />
+                    退出专注模式
+                  </Button>
+                )}
 
             {/* AI生成结果 */}
             {aiResult && (
@@ -5639,8 +5778,10 @@ ${data.story.ending || ''}`;
         )}
       </div>
 
-      {/* 右侧面板 */}
-      <div className="w-80 border-l bg-card p-3 overflow-y-auto">
+      {/* 专注模式时隐藏右侧面板 */}
+      {!focusMode && (
+        /* 右侧面板 */
+        <div className="w-80 border-l bg-card p-3 overflow-y-auto">
         {/* 标签导航 */}
         <div className="grid grid-cols-4 gap-1 mb-3">
           <Button
@@ -8483,6 +8624,7 @@ ${data.story.ending || ''}`;
           </div>
         )}
       </div>
+      )}
 
       {/* 激活弹窗 */}
       {/* 全屏强制验证界面 */}
@@ -8553,6 +8695,86 @@ ${data.story.ending || ''}`;
         open={apiKeyDialogOpen}
         onOpenChange={setApiKeyDialogOpen}
       />
+
+      {/* 版本历史对话框 */}
+      <Dialog open={versionHistoryOpen} onOpenChange={setVersionHistoryOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              章节版本历史
+            </DialogTitle>
+            <DialogDescription>
+              查看、恢复或删除历史版本
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-3 py-4">
+            {loadingVersions ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">加载版本中...</span>
+              </div>
+            ) : chapterVersions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <History className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                <p>暂无历史版本</p>
+                <p className="text-sm mt-1">编辑章节后会自动保存版本</p>
+              </div>
+            ) : (
+              chapterVersions.map((version: any) => (
+                <Card key={version.versionId} className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-xs">
+                          {version.wordCount}字
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(version.timestamp).toLocaleString('zh-CN')}
+                        </span>
+                      </div>
+                      {version.note && (
+                        <p className="text-sm font-medium mb-1">{version.note}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {version.content?.substring(0, 150)}...
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => restoreVersion(version.versionId)}
+                        className="h-8 text-xs"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                        恢复
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteVersion(version.versionId)}
+                        className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        删除
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+
+          <DialogFooter className="border-t pt-4">
+            <Button onClick={() => saveVersion('手动保存')} variant="outline" className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              手动保存当前版本
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 音乐播放器 */}
       <MusicPlayer />

@@ -1,18 +1,20 @@
 /**
  * IndexedDB 存储库
- * 
+ *
  * 解决 localStorage 5MB 限制问题
  * 支持大数据存储（章节内容、拆书分析结果等）
- * 
+ *
  * 存储结构：
  * - mainData: 主数据（标题、设置、人物引用等小数据）
  * - chapters: 章节数据（内容按章分开存储）
  * - analysis: 拆书分析结果
  * - snapshots: 快照数据
+ * - tasks: 任务队列存储
+ * - versions: 章节版本历史
  */
 
 const DB_NAME = 'novel-editor-db';
-const DB_VERSION = 2; // 增加版本号，触发升级以添加 TASKS 存储
+const DB_VERSION = 3; // 增加版本号，触发升级以添加 VERSIONS 存储
 const CHUNK_SIZE = 1024 * 1024; // 1MB per chunk
 
 export interface StoredChunk {
@@ -20,6 +22,18 @@ export interface StoredChunk {
   chunkIndex: number;
   data: string;
   timestamp: number;
+}
+
+/**
+ * 章节版本历史
+ */
+export interface ChapterVersion {
+  versionId: string;
+  chapterId: string;
+  content: string;
+  timestamp: number;
+  wordCount: number;
+  note?: string;
 }
 
 class IndexedDBStore {
@@ -30,6 +44,7 @@ class IndexedDBStore {
     ANALYSIS: 'analysis',
     SNAPSHOTS: 'snapshots',
     TASKS: 'tasks', // 任务队列存储
+    VERSIONS: 'versions', // 章节版本历史存储
   };
 
   /**
@@ -78,6 +93,13 @@ class IndexedDBStore {
         // 创建任务队列存储
         if (!db.objectStoreNames.contains(this.STORES.TASKS)) {
           db.createObjectStore(this.STORES.TASKS, { keyPath: 'taskId' });
+        }
+
+        // 创建版本历史存储
+        if (!db.objectStoreNames.contains(this.STORES.VERSIONS)) {
+          const versionStore = db.createObjectStore(this.STORES.VERSIONS, { keyPath: 'versionId' });
+          versionStore.createIndex('chapterId', 'chapterId', { unique: false });
+          versionStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
 
         console.log('[IndexedDB] 数据库结构创建完成');
@@ -674,6 +696,164 @@ class IndexedDBStore {
     } catch (error) {
       console.error('[IndexedDB] loadTasks 错误:', error);
       return [];
+    }
+  }
+
+  /**
+   * 保存章节版本
+   */
+  async saveChapterVersion(chapterId: string, content: string, note?: string): Promise<string> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.VERSIONS, 'readwrite');
+      const store = transaction.objectStore(this.STORES.VERSIONS);
+
+      const versionId = `${chapterId}_${Date.now()}`;
+      const version: ChapterVersion = {
+        versionId,
+        chapterId,
+        content,
+        timestamp: Date.now(),
+        wordCount: content.length,
+        note,
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.add(version);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      // 自动清理旧版本（每个章节最多保留20个版本）
+      await this.cleanOldVersions(chapterId, 20);
+
+      console.log(`[IndexedDB] 章节版本已保存: ${versionId}`);
+      return versionId;
+    } catch (error) {
+      console.error('[IndexedDB] saveChapterVersion 错误:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取章节的所有版本
+   */
+  async getChapterVersions(chapterId: string): Promise<ChapterVersion[]> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.VERSIONS, 'readonly');
+      const store = transaction.objectStore(this.STORES.VERSIONS);
+      const index = store.index('chapterId');
+
+      const versions = await new Promise<ChapterVersion[]>((resolve, reject) => {
+        const request = index.getAll(chapterId);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+
+      // 按时间倒序排列（最新的在前）
+      return versions.sort((a, b) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error('[IndexedDB] getChapterVersions 错误:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取指定版本
+   */
+  async getVersion(versionId: string): Promise<ChapterVersion | null> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.VERSIONS, 'readonly');
+      const store = transaction.objectStore(this.STORES.VERSIONS);
+
+      const version = await new Promise<ChapterVersion | null>((resolve, reject) => {
+        const request = store.get(versionId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+
+      return version;
+    } catch (error) {
+      console.error('[IndexedDB] getVersion 错误:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 删除指定版本
+   */
+  async deleteVersion(versionId: string): Promise<boolean> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.VERSIONS, 'readwrite');
+      const store = transaction.objectStore(this.STORES.VERSIONS);
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.delete(versionId);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      console.log(`[IndexedDB] 版本已删除: ${versionId}`);
+      return true;
+    } catch (error) {
+      console.error('[IndexedDB] deleteVersion 错误:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 清理旧版本（保留最新的N个版本）
+   */
+  async cleanOldVersions(chapterId: string, keepCount: number): Promise<void> {
+    try {
+      const versions = await this.getChapterVersions(chapterId);
+      if (versions.length <= keepCount) {
+        return;
+      }
+
+      const versionsToDelete = versions.slice(keepCount);
+      for (const version of versionsToDelete) {
+        await this.deleteVersion(version.versionId);
+      }
+
+      console.log(`[IndexedDB] 已清理 ${versionsToDelete.length} 个旧版本`);
+    } catch (error) {
+      console.error('[IndexedDB] cleanOldVersions 错误:', error);
+    }
+  }
+
+  /**
+   * 删除章节的所有版本
+   */
+  async deleteChapterVersions(chapterId: string): Promise<boolean> {
+    try {
+      const db = await this.ensureDB();
+      const transaction = db.transaction(this.STORES.VERSIONS, 'readwrite');
+      const store = transaction.objectStore(this.STORES.VERSIONS);
+      const index = store.index('chapterId');
+
+      const versions = await new Promise<ChapterVersion[]>((resolve, reject) => {
+        const request = index.getAll(chapterId);
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+
+      for (const version of versions) {
+        await new Promise<void>((resolve, reject) => {
+          const request = store.delete(version.versionId);
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      console.log(`[IndexedDB] 已删除章节 ${chapterId} 的所有版本`);
+      return true;
+    } catch (error) {
+      console.error('[IndexedDB] deleteChapterVersions 错误:', error);
+      return false;
     }
   }
 
