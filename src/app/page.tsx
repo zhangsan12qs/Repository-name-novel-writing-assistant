@@ -1852,6 +1852,21 @@ ${data.story.ending || ''}`;
       let endpoint = '/api/ai/continue';
       let body: any = { content: currentChapter?.content };
 
+      // 智能历史上下文选择
+      if (currentChapter && chapters.length > 1) {
+        const currentIndex = chapters.findIndex(c => c.id === currentChapter.id);
+        if (currentIndex > 0) {
+          // 获取当前章节之前的所有章节（按order排序）
+          const previousChapters = chapters
+            .filter(c => c.order < currentChapter!.order)
+            .sort((a, b) => a.order - b.order);
+
+          // 传递给后端，让后端根据模型上下文窗口智能选择
+          body.previousChapters = previousChapters;
+          body.currentChapterIndex = currentIndex;
+        }
+      }
+
       if (selectedAiTool === 'continue') {
         endpoint = '/api/ai/continue';
         body.context = aiPrompt;
