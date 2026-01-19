@@ -5157,6 +5157,10 @@ ${data.story.ending || ''}`;
               </div>
             </div>
             <div className="flex gap-1.5">
+              <Button size="sm" onClick={saveChapter} className="h-8 text-xs">
+                <Save className="h-3.5 w-3.5 mr-1" />
+                保存
+              </Button>
               <Button variant="outline" size="sm" onClick={handleCheckPlot} disabled={checkingPlot || validChapterCount === 0} className="h-8 text-xs">
                 {checkingPlot ? (
                   <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
@@ -5169,9 +5173,15 @@ ${data.story.ending || ''}`;
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 预览
               </Button>
-              <Button size="sm" onClick={saveChapter} className="h-8 text-xs">
-                <Save className="h-3.5 w-3.5 mr-1" />
-                保存
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setVersionHistoryOpen(true)}
+                disabled={!currentChapter || !currentChapter.id}
+                className="h-8 text-xs"
+              >
+                <History className="h-3.5 w-3.5 mr-1" />
+                版本历史
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -5200,16 +5210,6 @@ ${data.story.ending || ''}`;
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setVersionHistoryOpen(true)}
-                disabled={!currentChapter || !currentChapter.id}
-                className="h-8 text-xs"
-              >
-                <History className="h-3.5 w-3.5 mr-1" />
-                版本历史
-              </Button>
               <Button
                 variant={focusMode ? "default" : "outline"}
                 size="sm"
