@@ -60,152 +60,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
-import { BackgroundSettings, PresetWallpaper } from '@/components/background-system';
 import dynamic from 'next/dynamic';
-
-// 预设壁纸列表（与 background-system.tsx 保持一致）
-const PRESET_WALLPAPERS: PresetWallpaper[] = [
-  // 自然风景
-  {
-    id: 'nature-1',
-    name: '晨曦森林',
-    category: '自然风景',
-    url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
-    description: '清晨阳光穿透森林',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'nature-2',
-    name: '雪山山脉',
-    category: '自然风景',
-    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&q=80',
-    description: '壮丽雪山风光',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'nature-3',
-    name: '宁静湖畔',
-    category: '自然风景',
-    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&q=80',
-    description: '宁静的湖面倒影',
-    textColor: '#1a1a1a',
-  },
-  // 星空宇宙
-  {
-    id: 'space-1',
-    name: '璀璨星空',
-    category: '星空宇宙',
-    url: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=400&q=80',
-    description: '梦幻星空',
-    textColor: '#ffffff',
-  },
-  {
-    id: 'space-2',
-    name: '银河系',
-    category: '星空宇宙',
-    url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=400&q=80',
-    description: '浩瀚银河',
-    textColor: '#ffffff',
-  },
-  {
-    id: 'space-3',
-    name: '日落余晖',
-    category: '星空宇宙',
-    url: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400&q=80',
-    description: '日落时分的云彩',
-    textColor: '#1a1a1a',
-  },
-  // 抽象艺术
-  {
-    id: 'abstract-1',
-    name: '流动的色彩',
-    category: '抽象艺术',
-    url: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&q=80',
-    description: '渐变色彩流动',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'abstract-2',
-    name: '几何纹理',
-    category: '抽象艺术',
-    url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80',
-    description: '现代几何设计',
-    textColor: '#ffffff',
-  },
-  {
-    id: 'abstract-3',
-    name: '光与影',
-    category: '抽象艺术',
-    url: 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=400&q=80',
-    description: '光影交错',
-    textColor: '#ffffff',
-  },
-  // 简约风格
-  {
-    id: 'minimal-1',
-    name: '纯净白',
-    category: '简约风格',
-    url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400&q=80',
-    description: '简约白墙',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'minimal-2',
-    name: '柔和灰',
-    category: '简约风格',
-    url: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=80',
-    description: '灰色墙面',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'minimal-3',
-    name: '温暖米色',
-    category: '简约风格',
-    url: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=400&q=80',
-    description: '温暖米色背景',
-    textColor: '#1a1a1a',
-  },
-  // 古典文学
-  {
-    id: 'classic-1',
-    name: '纸质纹理',
-    category: '古典文学',
-    url: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&q=80',
-    description: '经典纸质纹理',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'classic-2',
-    name: '复古书籍',
-    category: '古典文学',
-    url: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=400&q=80',
-    description: '复古书页',
-    textColor: '#1a1a1a',
-  },
-  {
-    id: 'classic-3',
-    name: '羊皮纸',
-    category: '古典文学',
-    url: 'https://images.unsplash.com/photo-1506543751628-798543251559?w=1920&q=80',
-    thumbnail: 'https://images.unsplash.com/photo-1506543751628-798543251559?w=400&q=80',
-    description: '羊皮纸质感',
-    textColor: '#1a1a1a',
-  },
-];
 
 // 使用动态导入和懒加载优化大型组件
 const ThankAuthorButton = dynamic(() => import('@/components/thank-author-button'), {
@@ -225,11 +80,6 @@ const ApiKeySettings = dynamic(() => import('@/components/api-key-settings'), {
 
 const MusicPlayer = dynamic(() => import('@/components/music-player'), {
   loading: () => null,
-  ssr: false
-});
-
-const BackgroundSystem = dynamic(() => import('@/components/background-system'), {
-  loading: () => <div className="w-full h-12 bg-gray-100 animate-pulse rounded-lg" />,
   ssr: false
 });
 
@@ -328,16 +178,6 @@ type ToolResult = {
 
 export default function NovelEditor() {
   const [title, setTitle] = useState('');
-  const [backgroundSettings, setBackgroundSettings] = useState<BackgroundSettings>({
-    enabled: false,
-    type: 'color',
-    presetId: '',
-    customUrl: '',
-    customImage: null,
-    color: '#ffffff',
-    opacity: 60,
-    blur: 0,
-  });
   const [volumes, setVolumes] = useState<Volume[]>([
     { id: 'vol-1', title: '第一卷', description: '', order: 1 },
   ]);
@@ -4371,47 +4211,10 @@ ${data.story.ending || ''}`;
     setBookContentToAnalyze('');
   };
 
-  // 获取当前壁纸信息
-  const getCurrentWallpaper = () => {
-    if (!backgroundSettings.enabled) return null;
-    if (backgroundSettings.type === 'preset') {
-      return PRESET_WALLPAPERS.find(w => w.id === backgroundSettings.presetId);
-    }
-    return null;
-  };
-
-  const currentWallpaper = getCurrentWallpaper();
-
   return (
-    <div
-      className="flex min-h-screen"
-      style={{
-        ...(backgroundSettings.enabled && {
-          backgroundImage: backgroundSettings.type === 'preset' && currentWallpaper
-            ? `url(${currentWallpaper.url})`
-            : backgroundSettings.type === 'custom' && backgroundSettings.customImage
-            ? `url(${backgroundSettings.customImage})`
-            : 'none',
-          backgroundColor: backgroundSettings.type === 'color' ? backgroundSettings.color : 'transparent',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }),
-      }}
-    >
-      {/* 背景遮罩层 */}
-      {backgroundSettings.enabled && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            opacity: backgroundSettings.opacity / 100,
-            backdropFilter: backgroundSettings.blur > 0 ? `blur(${backgroundSettings.blur}px)` : 'none',
-          }}
-        />
-      )}
-
+    <div className="flex min-h-screen bg-background">
       {/* 左侧导航栏 - 使用 sticky 定位，跟随滚动 */}
-      <div className="w-72 border-r bg-card/95 backdrop-blur-sm p-4 sticky top-0 h-screen overflow-y-auto z-10">
+      <div className="w-72 border-r bg-card p-4 sticky top-0 h-screen overflow-y-auto">
         {/* 头部 */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3">
@@ -5225,7 +5028,7 @@ ${data.story.ending || ''}`;
       <div className="flex-1 flex flex-col">
         {/* 工具栏 - 只在有章节时显示 */}
         {chapters.length > 0 && (
-          <div className="border-b bg-card/95 backdrop-blur-sm p-4">
+          <div className="border-b bg-card p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <Input
@@ -5241,11 +5044,7 @@ ${data.story.ending || ''}`;
                 <span className="text-muted-foreground">字数: {currentChapter?.wordCount}</span>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <BackgroundSystem
-                settings={backgroundSettings}
-                onSettingsChange={setBackgroundSettings}
-              />
+            <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleCheckPlot} disabled={checkingPlot || validChapterCount === 0}>
                 {checkingPlot ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -5829,7 +5628,7 @@ ${data.story.ending || ''}`;
       </div>
 
       {/* 右侧面板 */}
-      <div className="w-96 border-l bg-card/95 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-96 border-l bg-card p-4 overflow-y-auto">
         {/* 标签导航 */}
         <div className="grid grid-cols-7 gap-1 mb-4">
           <Button
