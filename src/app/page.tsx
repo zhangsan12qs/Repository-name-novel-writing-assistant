@@ -4273,7 +4273,7 @@ ${data.story.ending || ''}`;
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <BookOpen className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-bold truncate">写作助手</h1>
+            <h1 className="text-lg font-bold truncate">B站知她高中就成绩了制作</h1>
           </div>
 
           {/* 小说标题 */}

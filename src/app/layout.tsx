@@ -6,7 +6,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: '网络小说写作助手 - AI 驱动的写作工具',
+  title: 'B站知她高中就成绩了制作 - AI 驱动的写作工具',
   description: '专业的网络小说写作工具，提供实时写作建议、人物设定管理、大纲规划和问题检查功能',
 };
 
