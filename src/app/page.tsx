@@ -60,6 +60,9 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
+import { CharacterItem } from '@/components/character-item';
+import { ChapterItem } from '@/components/chapter-item';
+import { VirtualList } from '@/components/virtual-list';
 import dynamic from 'next/dynamic';
 
 // 使用动态导入和懒加载优化大型组件
@@ -116,7 +119,7 @@ const GROWTH_KEYWORDS = [
 ];
 const RARE_CHARS_PATTERN = /[𠮷你𠰌𡧈]/g;
 
-type Character = {
+export type Character = {
   id: string;
   name: string;
   age?: string;
@@ -146,7 +149,7 @@ type Volume = {
   order: number;
 };
 
-type Chapter = {
+export type Chapter = {
   id: string;
   title: string;
   content: string;
@@ -653,7 +656,7 @@ ${data.story.ending || ''}`;
       } catch (error) {
         console.error('保存数据失败:', error);
       }
-    }, performanceMode ? 5000 : 3000); // 高效模式下增加到5秒，正常模式3秒
+    }, performanceMode ? 8000 : 5000); // 高效模式下增加到8秒，正常模式5秒，减少频繁写入
   }, [
     title,
     volumes,
@@ -837,7 +840,7 @@ ${data.story.ending || ''}`;
   };
 
   // 为问题检测添加防抖 - 使用useMemo缓存结果
-  const debouncedContent = useDebounce(currentChapter?.content || '', 500);
+  const debouncedContent = useDebounce(currentChapter?.content || '', 800);
 
   // 纯函数版本的人物问题检测
   const detectCharacterIssuesPure = (charactersList: Character[], chaptersList: Chapter[]): Issue[] => {
@@ -1143,7 +1146,7 @@ ${data.story.ending || ''}`;
     }
     updateIssuesRef.current = setTimeout(() => {
       setIssues(detectedIssues);
-    }, 300); // 300ms 防抖，避免频繁更新
+    }, 500); // 500ms 防抖，避免频繁更新
 
     return () => {
       if (updateIssuesRef.current) {
@@ -1563,7 +1566,7 @@ ${data.story.ending || ''}`;
 
     updateCharactersRef.current = setTimeout(() => {
       setCharacters(trackedCharacters);
-    }, 800); // 800ms 防抖，避免频繁更新
+    }, 1200); // 1200ms 防抖，避免频繁更新
 
     return () => {
       if (updateCharactersRef.current) {
@@ -4952,73 +4955,28 @@ ${data.story.ending || ''}`;
             </Card>
           )}
 
-          {/* 按卷显示章节 */}
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {volumes.map((volume) => {
-              const volumeChapters = chapters
-                .filter(c => c.volumeId === volume.id)
-                .sort((a, b) => a.order - b.order)
-                .slice(0, chaptersLimit);
-
-              return (
-                <div key={volume.id}>
-                  <div
-                    className="text-xs font-medium text-primary mb-1 cursor-pointer hover:underline"
-                    onClick={() => selectVolume(volume.id)}
-                  >
-                    {volume.title} ({volumeChapters.length}章)
-                  </div>
-                  <div className="space-y-1 pl-2 border-l-2 border-muted">
-                    {volumeChapters.map((chapter) => {
-                      const wordPercent = chapter.wordCount / chapterSettings.targetWordCountPerChapter;
-                      const wordColor = wordPercent >= 1 ? 'text-green-600' : wordPercent >= 0.7 ? 'text-yellow-600' : 'text-red-600';
-                      return (
-                        <div key={chapter.id} className="flex items-center gap-1 group">
-                          <Button
-                            variant={currentChapter?.id === chapter.id ? 'default' : 'ghost'}
-                            size="sm"
-                            className="flex-1 justify-start h-7 px-2 min-w-0"
-                            onClick={() => selectChapter(chapter.id)}
-                          >
-                            <div className="flex-1 text-left min-w-0">
-                              <div className="text-xs truncate">{chapter.title}</div>
-                            </div>
-                            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                              <span className={`text-[10px] ${wordColor}`}>
-                                {chapter.wordCount}字
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">
-                                /{chapterSettings.targetWordCountPerChapter}
-                              </span>
-                            </div>
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteChapter(chapter.id)}
-                            title="删除章节"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            {chapters.length > chaptersLimit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setChaptersLimit(prev => Math.min(prev + 50, chapters.length))}
-                className="w-full mt-2 text-xs"
-              >
-                显示更多章节 ({chapters.length - chaptersLimit}/{chapters.length})
-              </Button>
-            )}
+          {/* 按卷显示章节 - 使用虚拟滚动优化 */}
+          <div className="max-h-80 overflow-hidden">
+            <VirtualList
+              items={chapters}
+              height={320}
+              itemHeight={60}
+              renderItem={(chapter) => (
+                <ChapterItem
+                  key={chapter.id}
+                  chapter={chapter}
+                  isActive={currentChapter?.id === chapter.id}
+                  onSelect={(chapter) => selectChapter(chapter.id)}
+                  onDelete={handleDeleteChapter}
+                />
+              )}
+            />
           </div>
+          {chapters.length === 0 && (
+            <div className="text-center text-sm text-muted-foreground py-8">
+              暂无章节，请添加章节
+            </div>
+          )}
         </div>
 
         </div>
@@ -5978,70 +5936,27 @@ ${data.story.ending || ''}`;
                 </Card>
               )}
 
-              {characters.slice(0, charactersLimit).map((character) => (
-                <div key={character.id} className="flex items-start justify-between p-3 bg-muted/50 rounded">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">{character.name}</span>
-                      {character.role && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          {character.role}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                        {character.status === 'active' ? '活跃中' :
-                         character.status === 'inactive' ? '不活跃' :
-                         character.status === 'deceased' ? '已死亡' : '未知'}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {character.age && <span>{character.age}</span>}
-                      {character.personality && character.age && <span className="mx-1">·</span>}
-                      {character.personality && <span>{character.personality}</span>}
-                    </div>
-                    {/* 人物追踪信息 */}
-                    {character.chapterAppearances.length > 0 && (
-                      <div className="text-xs mt-1 space-y-0.5">
-                        <div className="text-blue-600 dark:text-blue-400">
-                          📍 出现：{character.firstAppearanceChapterTitle} ({character.chapterAppearances.length}次)
-                        </div>
-                        {character.appearanceReason && (
-                          <div className="text-purple-600 dark:text-purple-400">
-                            💬 出现原因：{character.appearanceReason}
-                          </div>
-                        )}
-                        {character.status !== 'active' && (
-                          <div className="text-orange-600 dark:text-orange-400">
-                            🔚 消失：{character.lastAppearanceChapterTitle}
-                          </div>
-                        )}
-                        {character.disappearanceReason && (
-                          <div className="text-red-600 dark:text-red-400">
-                            💬 消失原因：{character.disappearanceReason}
-                          </div>
-                        )}
-                      </div>
+              {/* 使用虚拟滚动优化人物列表渲染 */}
+              {characters.length > 0 && (
+                <div style={{ height: Math.min(characters.length * 100, 400) }} className="overflow-hidden">
+                  <VirtualList
+                    items={characters}
+                    height={Math.min(characters.length * 100, 400)}
+                    itemHeight={100}
+                    renderItem={(character) => (
+                      <CharacterItem
+                        key={character.id}
+                        character={character}
+                        onRemove={removeCharacter}
+                      />
                     )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeCharacter(character.id)}
-                    className="h-6 w-6 p-0 ml-2"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  />
                 </div>
-              ))}
-              {characters.length > charactersLimit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCharactersLimit(prev => Math.min(prev + 20, characters.length))}
-                  className="w-full mt-2 text-xs"
-                >
-                  显示更多 ({characters.length - charactersLimit}/{characters.length})
-                </Button>
+              )}
+              {characters.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground py-8">
+                  暂无人物，请添加人物
+                </div>
               )}
             </div>
 
