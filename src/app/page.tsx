@@ -223,7 +223,7 @@ export default function NovelEditor() {
 
   // 批量生成章节相关状态
   const [batchChapterGenerating, setBatchChapterGenerating] = useState(false);
-  const [batchGenerateChapterCount, setBatchGenerateChapterCount] = useState(5);
+  const [batchGenerateChapterCount, setBatchGenerateChapterCount] = useState(20);
   const [batchGenerateProgress, setBatchGenerateProgress] = useState({
     stepName: '',
     percentage: 0,
@@ -2159,6 +2159,23 @@ ${data.story.ending || ''}`;
     if (!outline) {
       alert('请先生成大纲！');
       return;
+    }
+
+    // ✅ 新增：检查章节数，给出提示
+    if (batchGenerateChapterCount > 50) {
+      const confirmed = confirm(
+        `⚠️ 检测到您要生成 ${batchGenerateChapterCount} 章\n\n` +
+        `重要提示：\n` +
+        `• 单次生成建议不超过50章，避免超时\n` +
+        `• 生成50章预计需要30-40分钟\n` +
+        `• 建议分批生成，每次50章\n\n` +
+        `是否继续生成 ${batchGenerateChapterCount} 章？\n\n` +
+        `建议：点击"取消"，然后修改章节数为50，多次生成。`
+      );
+
+      if (!confirmed) {
+        return;  // 用户取消
+      }
     }
 
     setBatchChapterGenerating(true);
@@ -4236,12 +4253,12 @@ ${data.story.ending || ''}`;
   return (
     <div className="flex min-h-screen bg-background">
       {/* 左侧导航栏 - 使用 sticky 定位，跟随滚动 */}
-      <div className="w-72 border-r bg-card p-4 sticky top-0 h-screen overflow-y-auto">
+      <div className="w-52 border-r bg-card p-3 sticky top-0 h-screen overflow-y-auto">
         {/* 头部 */}
         <div className="mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">b站知她高中就成绩了研发</h1>
+          <div className="flex items-center gap-2 mb-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h1 className="text-lg font-bold truncate">写作助手</h1>
           </div>
 
           {/* 小说标题 */}
@@ -4249,7 +4266,7 @@ ${data.story.ending || ''}`;
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="小说标题"
-            className="mb-2"
+            className="text-sm h-9"
           />
         </div>
 
@@ -4315,33 +4332,33 @@ ${data.story.ending || ''}`;
         <div className="border-t my-3" />
 
         {/* 感谢作者 - 独立显示，不属于任何阶段 */}
-        <Card className="p-3 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-pink-200 dark:border-pink-800">
+        <Card className="p-2 bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-950 dark:to-rose-950 border-pink-200 dark:border-pink-800">
           <ThankAuthorButton />
         </Card>
 
         {/* API 设置 - 独立显示 */}
-        <Card className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+        <Card className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
           <Button
             variant="ghost"
-            className="w-full justify-start text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100"
+            className="w-full justify-start text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 h-8 text-xs"
             onClick={() => setApiKeyDialogOpen(true)}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
+            <Sparkles className="h-3.5 w-3.5 mr-2" />
             AI 配置
-            <Badge className="ml-auto bg-green-500 hover:bg-green-600" variant="secondary">
+            <Badge className="ml-auto bg-green-500 hover:bg-green-600 text-[10px]" variant="secondary">
               免费
             </Badge>
           </Button>
         </Card>
 
         {/* 分隔线 */}
-        <div className="border-t my-3" />
+        <div className="border-t my-2" />
 
         {/* 阶段1：准备设定 */}
         {currentStep === 1 && (
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
-              <div className="w-1 h-4 bg-blue-500 rounded" />
+          <div className="space-y-2">
+            <div className="text-[11px] font-medium text-blue-700 dark:text-blue-300 flex items-center gap-1">
+              <div className="w-1 h-3 bg-blue-500 rounded" />
               阶段1：准备设定
             </div>
 
@@ -4352,12 +4369,12 @@ ${data.story.ending || ''}`;
             />
 
             {/* 核心写作规则 */}
-            <Card className="p-2 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
-              <div className="text-xs font-medium mb-1 text-red-700 dark:text-red-300 flex items-center gap-1">
+            <Card className="p-1.5 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
+              <div className="text-[11px] font-medium mb-0.5 text-red-700 dark:text-red-300 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3" />
                 核心写作规则
               </div>
-              <div className="text-[10px] text-red-600 dark:text-red-400 space-y-0.5">
+              <div className="text-[10px] text-red-600 dark:text-red-400">
                 <div className="font-bold">🚫 禁止感情线/成长线作为主线</div>
               </div>
             </Card>
@@ -4366,15 +4383,15 @@ ${data.story.ending || ''}`;
 
         {/* 阶段2：规划结构 */}
         {currentStep === 2 && (
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-purple-700 dark:text-purple-300 flex items-center gap-1">
-              <div className="w-1 h-4 bg-purple-500 rounded" />
+          <div className="space-y-2">
+            <div className="text-[11px] font-medium text-purple-700 dark:text-purple-300 flex items-center gap-1">
+              <div className="w-1 h-3 bg-purple-500 rounded" />
               阶段2：规划结构
             </div>
 
             {/* 章节设置 */}
-            <Card className="p-2 bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800">
-              <div className="text-xs font-medium mb-1 text-purple-700 dark:text-purple-300 flex items-center gap-1">
+            <Card className="p-1.5 bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800">
+              <div className="text-[11px] font-medium mb-1 text-purple-700 dark:text-purple-300 flex items-center gap-1">
                 <Settings className="h-3 w-3" />
                 章节设置
               </div>
@@ -4387,11 +4404,14 @@ ${data.story.ending || ''}`;
                     max="1000"
                     value={chapterSettings.targetChapterCount}
                     onChange={(e) => setChapterSettings({ ...chapterSettings, targetChapterCount: parseInt(e.target.value) || 1 })}
-                    className="h-6 text-xs"
+                    className="h-7 text-xs"
                   />
+                  <span className="text-[10px] text-orange-500 ml-1 block">
+                    ⚠️ 单次≤50章
+                  </span>
                 </div>
                 <div>
-                  <Label className="text-[10px] text-purple-600 dark:text-purple-400">每章字数要求</Label>
+                  <Label className="text-[10px] text-purple-600 dark:text-purple-400">每章字数</Label>
                   <Input
                     type="number"
                     min="100"
@@ -4399,7 +4419,7 @@ ${data.story.ending || ''}`;
                     step="100"
                     value={chapterSettings.targetWordCountPerChapter}
                     onChange={(e) => setChapterSettings({ ...chapterSettings, targetWordCountPerChapter: parseInt(e.target.value) || 1000 })}
-                    className="h-6 text-xs"
+                    className="h-7 text-xs"
                   />
                 </div>
               </div>
@@ -4408,10 +4428,10 @@ ${data.story.ending || ''}`;
             {/* 批量生成章节按钮 */}
             <Button
               size="sm"
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600 h-8 text-xs"
               onClick={() => setActiveTab('tools')}
             >
-              <Sparkles className="h-4 w-4 mr-2" />
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
               批量生成章节
             </Button>
           </div>
@@ -4419,15 +4439,15 @@ ${data.story.ending || ''}`;
 
         {/* 阶段3：内容创作 */}
         {currentStep === 3 && (
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-green-700 dark:text-green-300 flex items-center gap-1">
-              <div className="w-1 h-4 bg-green-500 rounded" />
+          <div className="space-y-2">
+            <div className="text-[11px] font-medium text-green-700 dark:text-green-300 flex items-center gap-1">
+              <div className="w-1 h-3 bg-green-500 rounded" />
               阶段3：内容创作
             </div>
 
             {/* 写作反馈与调整 */}
-            <Card className="p-2 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-              <div className="text-xs font-medium mb-1 text-green-700 dark:text-green-300 flex items-center gap-1">
+            <Card className="p-1.5 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+              <div className="text-[11px] font-medium mb-1 text-green-700 dark:text-green-300 flex items-center gap-1">
                 <Edit className="h-3 w-3" />
                 写作反馈
               </div>
@@ -5005,9 +5025,9 @@ ${data.story.ending || ''}`;
       <div className="flex-1 flex flex-col">
         {/* 工具栏 - 只在有章节时显示 */}
         {chapters.length > 0 && (
-          <div className="border-b bg-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-4">
+          <div className="border-b bg-card p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
               <Input
                 value={currentChapter?.title}
                 onChange={(e) => {
@@ -5015,33 +5035,33 @@ ${data.story.ending || ''}`;
                     setCurrentChapter({ ...currentChapter, title: e.target.value });
                   }
                 }}
-                className="w-64"
+                className="w-56 h-9 text-sm"
               />
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">字数: {currentChapter?.wordCount}</span>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleCheckPlot} disabled={checkingPlot || validChapterCount === 0}>
+            <div className="flex gap-1.5">
+              <Button variant="outline" size="sm" onClick={handleCheckPlot} disabled={checkingPlot || validChapterCount === 0} className="h-8 text-xs">
                 {checkingPlot ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
                 ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
                 )}
                 {checkingPlot ? '检查中...' : '剧情检查'}
               </Button>
-              <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" className="h-8 text-xs">
+                <Eye className="h-3.5 w-3.5 mr-1" />
                 预览
               </Button>
-              <Button size="sm" onClick={saveChapter}>
-                <Save className="h-4 w-4 mr-2" />
+              <Button size="sm" onClick={saveChapter} className="h-8 text-xs">
+                <Save className="h-3.5 w-3.5 mr-1" />
                 保存
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Download className="h-3.5 w-3.5 mr-1" />
                     导出
                   </Button>
                 </DropdownMenuTrigger>
@@ -5071,9 +5091,9 @@ ${data.story.ending || ''}`;
           </div>
 
           {/* AI工具栏 */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
             <Select value={selectedAiTool} onValueChange={setSelectedAiTool}>
-              <SelectTrigger className="h-8 w-[140px]">
+              <SelectTrigger className="h-8 w-[120px] text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -5095,13 +5115,13 @@ ${data.story.ending || ''}`;
                   ? '选择润色风格：简洁明快/细腻优美/悬疑紧凑/幽默风趣'
                   : '输入本章大纲，AI将自动撰写本章内容'
               }
-              className="flex-1 h-8"
+              className="flex-1 h-8 text-sm"
             />
-            <Button size="sm" onClick={selectedAiTool === 'auto-write' ? handleAutoWrite : handleAiAction} disabled={aiLoading}>
+            <Button size="sm" onClick={selectedAiTool === 'auto-write' ? handleAutoWrite : handleAiAction} disabled={aiLoading} className="h-8 text-xs">
               {aiLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
               ) : (
-                <Wand2 className="h-4 w-4 mr-2" />
+                <Wand2 className="h-3.5 w-3.5 mr-1" />
               )}
               {aiLoading ? '生成中...' : '生成'}
             </Button>
@@ -5605,64 +5625,78 @@ ${data.story.ending || ''}`;
       </div>
 
       {/* 右侧面板 */}
-      <div className="w-96 border-l bg-card p-4 overflow-y-auto">
+      <div className="w-80 border-l bg-card p-3 overflow-y-auto">
         {/* 标签导航 */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
+        <div className="grid grid-cols-4 gap-1 mb-3">
           <Button
             size="sm"
             variant={activeTab === 'characters' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('characters')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="人物管理"
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">人物</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'world' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('world')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="世界观"
           >
-            <BookMarked className="h-4 w-4" />
+            <BookMarked className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">世界</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'tools' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('tools')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="AI工具"
           >
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">工具</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'tasks' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('tasks')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="任务队列"
           >
-            <ListTodo className="h-4 w-4" />
+            <ListTodo className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">任务</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'analysis' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('analysis')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="拆书分析"
           >
-            <BookMarked className="h-4 w-4" />
+            <BookMarked className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">分析</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'analysisResult' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('analysisResult')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="分析结果"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">结果</span>
           </Button>
           <Button
             size="sm"
             variant={activeTab === 'import' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('import')}
-            className="h-9"
+            className="h-8 text-xs"
+            title="更改导入"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">导入</span>
           </Button>
         </div>
 
@@ -6223,12 +6257,15 @@ ${data.story.ending || ''}`;
                     <Input
                       type="number"
                       min="1"
-                      max="100"
+                      max="50"
                       value={batchGenerateChapterCount}
                       onChange={(e) => setBatchGenerateChapterCount(Math.max(1, parseInt(e.target.value) || 1))}
-                      placeholder="1-100"
+                      placeholder="1-50"
                       className="h-9"
                     />
+                    <span className="text-xs text-orange-500 ml-1 block mt-1">
+                      ⚠️ 单次建议≤50章
+                    </span>
                   </div>
                   <div>
                     <Label className="text-xs mb-1 block">当前总章节数</Label>

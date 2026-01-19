@@ -158,10 +158,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证章节数范围
-    if (chapterCount < 1 || chapterCount > 100) {
+    if (chapterCount < 1 || chapterCount > 50) {
       console.error('[BatchGenerate] 章节数超出范围:', chapterCount);
       return NextResponse.json(
-        { error: '章节数必须在1-100之间' },
+        { error: '章节数必须在1-50之间。生成1000章请分批进行，每次50章。' },
         { status: 400 }
       );
     }
