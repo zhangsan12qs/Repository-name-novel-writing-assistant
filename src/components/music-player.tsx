@@ -104,31 +104,37 @@ const TrackItem = memo<{
   return (
     <button
       onClick={() => onSelect(track)}
-      className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all ${
+      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group ${
         isCurrent
-          ? 'bg-purple-100 text-purple-900 shadow-md'
-          : 'hover:bg-white/50 text-gray-700'
+          ? 'bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 border-2 border-purple-300 dark:border-purple-700 shadow-md'
+          : 'hover:bg-white/80 dark:hover:bg-gray-800/80 border border-transparent hover:border-purple-200 dark:hover:border-purple-800'
       }`}
     >
-      {isPlaying ? (
-        <div className="flex gap-0.5 items-end h-4">
-          <div className="w-1 h-3 bg-purple-500 animate-pulse"></div>
-          <div className="w-1 h-4 bg-purple-500 animate-pulse delay-100"></div>
-          <div className="w-1 h-2 bg-purple-500 animate-pulse delay-200"></div>
+      {isPlaying && isCurrent ? (
+        <div className="flex gap-0.5 items-end h-5 flex-shrink-0">
+          <div className="w-1.5 h-4 bg-gradient-to-t from-purple-600 to-pink-600 rounded-full animate-pulse"></div>
+          <div className="w-1.5 h-5 bg-gradient-to-t from-pink-600 to-purple-600 rounded-full animate-pulse delay-100"></div>
+          <div className="w-1.5 h-3 bg-gradient-to-t from-purple-600 to-pink-600 rounded-full animate-pulse delay-200"></div>
         </div>
       ) : (
-        <Music className="w-4 h-4 flex-shrink-0" />
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          isCurrent ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30 group-hover:text-purple-600 dark:group-hover:text-purple-400'
+        }`}>
+          <Music className="w-5 h-5" />
+        </div>
       )}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium truncate">
+        <div className={`text-sm font-semibold truncate mb-0.5 ${
+          isCurrent ? 'text-purple-900 dark:text-purple-100' : 'text-gray-700 dark:text-gray-300'
+        }`}>
           {track.name}
         </div>
-        <div className="text-xs text-gray-500 truncate">
+        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
           {track.artist}
         </div>
       </div>
       {isCurrent && isPlaying && (
-        <span className="text-xs text-purple-600 flex-shrink-0">播放中</span>
+        <span className="badge-green flex-shrink-0 animate-pulse">播放中</span>
       )}
     </button>
   );
@@ -349,25 +355,35 @@ export default function MusicPlayer() {
 
       {/* 最小化状态 */}
       {!isExpanded && (
-        <Card className="fixed bottom-4 right-4 p-3 shadow-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border-purple-200/20 cursor-pointer hover:from-purple-500/20 hover:to-pink-500/20 transition-all z-40">
+        <Card className="fixed bottom-6 right-6 p-3 shadow-2xl glass-strong border-2 border-purple-200/30 dark:border-purple-800/30 cursor-pointer hover:scale-105 hover:shadow-purple-500/20 transition-all duration-300 z-50 group animate-fade-in">
           <div className="flex items-center gap-3" onClick={() => setIsExpanded(true)}>
-            <Music className="w-5 h-5 text-purple-600 flex-shrink-0" />
+            <div className="relative flex-shrink-0">
+              <Music className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              {isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex gap-0.5 items-end h-4">
+                    <div className="w-1 h-3 bg-purple-500 animate-pulse rounded-full"></div>
+                    <div className="w-1 h-4 bg-pink-500 animate-pulse delay-100 rounded-full"></div>
+                    <div className="w-1 h-2 bg-purple-500 animate-pulse delay-200 rounded-full"></div>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-gray-800 truncate">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
                 {currentTrack?.name || '背景音乐'}
               </span>
-              <span className="text-xs text-gray-600 truncate">
+              <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
                 {currentTrack?.artist || '点击播放'}
               </span>
             </div>
             <Button
               size="sm"
-              variant="ghost"
               onClick={(e) => {
                 e.stopPropagation();
                 handlePlayPause();
               }}
-              className="ml-auto flex-shrink-0"
+              className="ml-auto flex-shrink-0 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -379,7 +395,7 @@ export default function MusicPlayer() {
                 e.stopPropagation();
                 setIsExpanded(true);
               }}
-              className="flex-shrink-0"
+              className="flex-shrink-0 hover:bg-purple-100 dark:hover:bg-purple-900/30"
             >
               <ChevronUp className="w-4 h-4" />
             </Button>
@@ -389,52 +405,75 @@ export default function MusicPlayer() {
 
       {/* 展开状态 */}
       {isExpanded && (
-        <Card className="fixed bottom-4 right-4 w-80 shadow-2xl bg-gradient-to-br from-purple-50 to-pink-50 backdrop-blur-md border-purple-200/30 z-40 max-h-[90vh] overflow-hidden flex flex-col">
-          <div className="p-4 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-96 shadow-2xl glass-strong border-2 border-purple-200/30 dark:border-purple-800/30 z-50 max-h-[85vh] overflow-hidden flex flex-col animate-scale-in">
+          {/* 顶部装饰条 */}
+          <div className="h-2 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 animate-shimmer" />
+
+          <div className="p-5 flex flex-col">
             {/* 标题栏 */}
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <Music className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold text-gray-800">背景音乐</h3>
+            <div className="flex items-center justify-between mb-5 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Music className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gradient-purple">背景音乐</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">享受创作时光</p>
+                </div>
               </div>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsExpanded(false)}
+                className="hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
               >
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-5 h-5" />
               </Button>
             </div>
 
             {/* 错误提示 */}
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 flex-shrink-0">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="mb-4 p-3 bg-red-50/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-2 flex-shrink-0 animate-fade-in">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
               </div>
             )}
 
-            {/* 当前播放 */}
+            {/* 当前播放卡片 */}
             {currentTrack && (
-              <div className="mb-4 p-3 bg-white/50 rounded-lg flex-shrink-0">
-                <div className="text-sm font-medium text-gray-800 mb-1 truncate">
-                  {currentTrack.name}
+              <div className="mb-5 p-4 bg-gradient-to-br from-purple-100/80 to-pink-100/80 dark:from-purple-900/50 dark:to-pink-900/50 rounded-xl border border-purple-200/50 dark:border-purple-800/50 flex-shrink-0 hover-lift">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1 truncate">
+                      {currentTrack.name}
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {currentTrack.artist} · <span className="badge-purple inline-block ml-1">{currentTrack.category}</span>
+                    </p>
+                  </div>
+                  {isPlaying && (
+                    <div className="flex gap-0.5 items-end h-6 ml-2 flex-shrink-0">
+                      <div className="w-1.5 h-4 bg-purple-500 animate-pulse rounded-full"></div>
+                      <div className="w-1.5 h-6 bg-pink-500 animate-pulse delay-100 rounded-full"></div>
+                      <div className="w-1.5 h-3 bg-purple-500 animate-pulse delay-200 rounded-full"></div>
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-gray-600 mb-2">
-                  {currentTrack.artist} · {currentTrack.category}
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs text-gray-500 w-10 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-12 flex-shrink-0">
                     {formatTime(currentTime)}
                   </span>
-                  <Slider
-                    value={[currentTime]}
-                    onValueChange={handleSeek}
-                    max={duration}
-                    step={0.1}
-                    className="flex-1"
-                  />
-                  <span className="text-xs text-gray-500 w-10 text-right flex-shrink-0">
+                  <div className="flex-1">
+                    <Slider
+                      value={[currentTime]}
+                      onValueChange={handleSeek}
+                      max={duration}
+                      step={0.1}
+                      className="[&_[role=slider]]:h-2 [&_[role=slider]]:bg-purple-100 dark:[&_[role=slider]]:bg-purple-900"
+                    />
+                  </div>
+                  <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-12 text-right flex-shrink-0">
                     {formatTime(duration)}
                   </span>
                 </div>
@@ -442,78 +481,87 @@ export default function MusicPlayer() {
             )}
 
             {/* 控制按钮 */}
-            <div className="flex items-center justify-center gap-2 mb-4 flex-shrink-0">
+            <div className="flex items-center justify-center gap-3 mb-5 flex-shrink-0">
               <Button
                 size="sm"
-                variant="outline"
                 onClick={handleToggleRepeat}
                 title={repeatMode === 'one' ? '单曲循环' : repeatMode === 'all' ? '列表循环' : '不循环'}
+                variant="ghost"
+                className={`rounded-full w-10 h-10 ${repeatMode !== 'none' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' : ''}`}
               >
                 {getRepeatIcon()}
               </Button>
               <Button
-                size="sm"
-                variant="outline"
+                size="lg"
                 onClick={handlePrevious}
+                variant="ghost"
+                className="rounded-full w-11 h-11 hover:bg-purple-100 dark:hover:bg-purple-900/30"
               >
-                <SkipBack className="w-4 h-4" />
+                <SkipBack className="w-5 h-5" />
               </Button>
               <Button
                 size="lg"
                 onClick={handlePlayPause}
-                className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 flex-shrink-0"
+                className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl hover:shadow-purple-500/30 flex-shrink-0 transition-all duration-200 hover:scale-110 active:scale-95"
                 disabled={isLoading}
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
               </Button>
               <Button
-                size="sm"
-                variant="outline"
+                size="lg"
                 onClick={handleNext}
+                variant="ghost"
+                className="rounded-full w-11 h-11 hover:bg-purple-100 dark:hover:bg-purple-900/30"
               >
-                <SkipForward className="w-4 h-4" />
+                <SkipForward className="w-5 h-5" />
               </Button>
               <Button
                 size="sm"
-                variant="outline"
                 onClick={handleToggleMute}
                 title={isMuted ? '静音' : '取消静音'}
+                variant="ghost"
+                className={`rounded-full w-10 h-10 ${isMuted ? 'text-gray-400' : ''}`}
               >
                 {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </Button>
             </div>
 
             {/* 音量控制 */}
-            <div className="flex items-center gap-2 mb-4 px-4 flex-shrink-0">
-              <Volume2 className="w-4 h-4 text-gray-600 flex-shrink-0" />
-              <Slider
-                value={[isMuted ? 0 : volume]}
-                onValueChange={handleVolumeChange}
-                max={100}
-                step={1}
-                className="flex-1"
-              />
-              <span className="text-xs text-gray-600 w-8 text-right flex-shrink-0">
+            <div className="flex items-center gap-3 mb-5 px-2 py-3 bg-white/50 dark:bg-gray-800/50 rounded-xl flex-shrink-0">
+              <Volume2 className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+              <div className="flex-1">
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  onValueChange={handleVolumeChange}
+                  max={100}
+                  step={1}
+                  className="[&_[role=slider]]:h-2 [&_[role=slider]]:bg-purple-100 dark:[&_[role=slider]]:bg-purple-900"
+                />
+              </div>
+              <span className="text-xs font-bold text-gray-600 dark:text-gray-400 w-10 text-right flex-shrink-0">
                 {isMuted ? 0 : volume}%
               </span>
             </div>
 
             {/* 播放列表 */}
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
               {Object.entries(groupedTracks).map(([category, tracks]) => (
                 <div key={category}>
-                  <div className="text-xs font-semibold text-gray-500 mb-1 px-1 sticky top-0 bg-purple-50/90 backdrop-blur-sm py-1">
+                  <div className="text-xs font-bold text-purple-600 dark:text-purple-400 mb-2 px-2 flex items-center gap-2 sticky top-0 bg-purple-50/90 dark:bg-purple-900/90 backdrop-blur-sm py-2 rounded-lg">
+                    <div className="w-2 h-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"></div>
                     {category}
                   </div>
-                  {tracks.map(track => (
-                    <TrackItem
-                      key={track.id}
-                      track={track}
-                      isPlaying={isPlaying}
-                      isCurrent={currentTrack?.id === track.id}
-                      onSelect={handleSelectTrack}
-                    />
-                  ))}
+                  <div className="space-y-1.5">
+                    {tracks.map(track => (
+                      <TrackItem
+                        key={track.id}
+                        track={track}
+                        isPlaying={isPlaying}
+                        isCurrent={currentTrack?.id === track.id}
+                        onSelect={handleSelectTrack}
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
