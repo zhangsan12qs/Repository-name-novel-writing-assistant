@@ -60,10 +60,28 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { dataProtector } from '@/lib/data-protector';
 import { indexedDBStore } from '@/lib/indexeddb-store';
-import ThankAuthorButton from '@/components/thank-author-button';
-import AutoOutlineDialog from '@/components/auto-outline-dialog';
-import ApiKeySettings from '@/components/api-key-settings';
-import MusicPlayer from '@/components/music-player';
+import dynamic from 'next/dynamic';
+
+// 使用动态导入和懒加载优化大型组件
+const ThankAuthorButton = dynamic(() => import('@/components/thank-author-button'), {
+  loading: () => <div className="w-full h-12 bg-gray-100 animate-pulse rounded-lg" />,
+  ssr: false
+});
+
+const AutoOutlineDialog = dynamic(() => import('@/components/auto-outline-dialog'), {
+  loading: () => <div className="w-full h-64 bg-gray-100 animate-pulse rounded-lg" />,
+  ssr: false
+});
+
+const ApiKeySettings = dynamic(() => import('@/components/api-key-settings'), {
+  loading: () => <div className="w-full h-96 bg-gray-100 animate-pulse rounded-lg" />,
+  ssr: false
+});
+
+const MusicPlayer = dynamic(() => import('@/components/music-player'), {
+  loading: () => null,
+  ssr: false
+});
 
 // 防抖函数
 function useDebounce<T>(value: T, delay: number): T {

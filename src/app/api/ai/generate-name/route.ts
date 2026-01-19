@@ -195,7 +195,8 @@ export async function POST(request: NextRequest) {
         finalApiKey = apiKey.trim();
         useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
       } else {
-        finalApiKey = getApiKey(); // 使用环境变量（Coze）
+        const config = getApiKey();
+        finalApiKey = config.key; // 使用环境变量（Coze）
         useSiliconFlow = false;
       }
     } catch (error) {

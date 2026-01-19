@@ -140,12 +140,12 @@ export async function extractAiConfigFromRequest(
 /**
  * 创建统一的流式响应
  */
-export function createStreamResponse(
+export async function createStreamResponse(
   messages: AiMessage[],
   config: AiConfig
-): Response {
+): Promise<Response> {
   const encoder = new TextEncoder();
-  const stream = streamAiResponse(messages, config, encoder);
+  const stream = await streamAiResponse(messages, config, encoder);
 
   return new Response(stream, {
     headers: {
