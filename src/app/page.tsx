@@ -5786,16 +5786,6 @@ ${data.story.ending || ''}`;
         <div className="grid grid-cols-4 gap-1 mb-3">
           <Button
             size="sm"
-            variant={activeTab === 'characters' ? 'default' : 'ghost'}
-            onClick={() => setActiveTab('characters')}
-            className="h-8 text-xs"
-            title="人物管理"
-          >
-            <Users className="h-3.5 w-3.5 mr-1" />
-            <span className="hidden sm:inline">人物</span>
-          </Button>
-          <Button
-            size="sm"
             variant={activeTab === 'world' ? 'default' : 'ghost'}
             onClick={() => setActiveTab('world')}
             className="h-8 text-xs"
@@ -5803,6 +5793,16 @@ ${data.story.ending || ''}`;
           >
             <BookMarked className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">世界</span>
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === 'characters' ? 'default' : 'ghost'}
+            onClick={() => setActiveTab('characters')}
+            className="h-8 text-xs"
+            title="人物管理"
+          >
+            <Users className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">人物</span>
           </Button>
           <Button
             size="sm"
