@@ -335,7 +335,7 @@ export default function NovelEditor() {
     customUrl: '',
     customImage: null,
     color: '#ffffff',
-    opacity: 100,
+    opacity: 60,
     blur: 0,
   });
   const [volumes, setVolumes] = useState<Volume[]>([
@@ -4395,7 +4395,6 @@ ${data.story.ending || ''}`;
           backgroundColor: backgroundSettings.type === 'color' ? backgroundSettings.color : 'transparent',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
         }),
       }}
     >
@@ -4404,9 +4403,9 @@ ${data.story.ending || ''}`;
         <div
           className="fixed inset-0 pointer-events-none"
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
             opacity: backgroundSettings.opacity / 100,
-            backdropFilter: `blur(${backgroundSettings.blur}px)`,
+            backdropFilter: backgroundSettings.blur > 0 ? `blur(${backgroundSettings.blur}px)` : 'none',
           }}
         />
       )}
