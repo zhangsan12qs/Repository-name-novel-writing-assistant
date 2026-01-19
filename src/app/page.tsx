@@ -296,6 +296,9 @@ export default function NovelEditor() {
   const [chapterVersions, setChapterVersions] = useState<any[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
 
+  // 预览对话框状态
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   // 专注模式状态
   const [focusMode, setFocusMode] = useState(false);
 
@@ -5169,7 +5172,7 @@ ${data.story.ending || ''}`;
                 )}
                 {checkingPlot ? '检查中...' : '剧情检查'}
               </Button>
-              <Button variant="outline" size="sm" className="h-8 text-xs">
+              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)} disabled={!currentChapter || !currentChapter.content} className="h-8 text-xs">
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 预览
               </Button>
@@ -8695,6 +8698,38 @@ ${data.story.ending || ''}`;
         open={apiKeyDialogOpen}
         onOpenChange={setApiKeyDialogOpen}
       />
+
+      {/* 预览对话框 */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              章节预览
+            </DialogTitle>
+            <DialogDescription>
+              以阅读模式查看当前章节内容
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-4">
+            {currentChapter && (
+              <div className="space-y-4">
+                <div className="text-2xl font-bold text-center mb-6">
+                  {currentChapter.title}
+                </div>
+                <div className="leading-relaxed whitespace-pre-wrap text-sm text-muted-foreground">
+                  {currentChapter.content}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setPreviewOpen(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 版本历史对话框 */}
       <Dialog open={versionHistoryOpen} onOpenChange={setVersionHistoryOpen}>
