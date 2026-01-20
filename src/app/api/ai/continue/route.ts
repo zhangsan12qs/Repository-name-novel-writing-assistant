@@ -41,7 +41,7 @@ function calculateMaxHistoryChapters(contextSize: number, totalChapters: number)
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, context, articleRequirements, apiKey, modelConfig, aiMode, previousChapters, currentChapterIndex } = await request.json();
+    const { content, context, articleRequirements, apiKey, modelConfig, previousChapters, currentChapterIndex } = await request.json();
 
     if (!content) {
       return NextResponse.json(
