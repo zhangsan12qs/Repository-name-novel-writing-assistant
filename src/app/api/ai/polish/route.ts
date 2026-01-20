@@ -1,47 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAiConfig, normalizeMessages, createStreamResponse, extractAiConfigFromRequest } from '@/lib/ai-route-helper';
-
-/**
- * 获取模型的上下文窗口大小
- */
-function getModelContextSize(model: string): number {
-  // Groq 模型
-  if (model.includes('llama-3.1-70b')) return 128000;
-  if (model.includes('llama-3.1-8b')) return 128000;
-  if (model.includes('llama3-70b')) return 8192;
-  if (model.includes('llama3-8b')) return 8192;
-  if (model.includes('mixtral-8x7b')) return 32768;
-  if (model.includes('gemma')) return 8192;
-
-  // 硅基流动模型（常见模型）
-  if (model.includes('DeepSeek-V3')) return 64000;
-  if (model.includes('Qwen2.5-72B')) return 32000;
-  if (model.includes('Qwen2.5-32B')) return 32000;
-  if (model.includes('Qwen2.5-7B')) return 32000;
-  if (model.includes('Yi-1.5-34B')) return 64000;
-  if (model.includes('Llama-3.1-8B')) return 128000;
-
-  // 默认使用较小的上下文
-  return 16000;
-}
-
-/**
- * 根据上下文窗口大小计算最大历史章节数
- */
-function calculateMaxHistoryChapters(contextSize: number, totalChapters: number): number {
-  // 估算：假设每章平均2000字（约3000 tokens）
-  const avgTokensPerChapter = 3000;
-  // 预留30%给系统提示、输出等
-  const availableTokens = contextSize * 0.7;
-  const maxChapters = Math.floor(availableTokens / avgTokensPerChapter);
-
-  return Math.min(maxChapters, totalChapters);
-}
+import { getApiKey, streamAiCall } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { content, style, articleRequirements, previousChapters, currentChapterIndex } = body;
+    const { content, style, apiKey, articleRequirements, previousChapters, currentChapterIndex } = body;
 
     if (!content) {
       return NextResponse.json(
@@ -50,40 +13,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 提取 AI 配置
-    const requestConfig = await extractAiConfigFromRequest(request);
-    const config = getAiConfig(requestConfig.apiKey, requestConfig.modelConfig);
+    // 获取 API Key
+    let finalApiKey: string;
+    try {
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
-    // 智能历史上下文管理
+    // 构建历史剧情上下文
     let contextPrompt = '';
     if (previousChapters && previousChapters.length > 0) {
-      const modelContextSize = getModelContextSize(config.model);
-      const maxHistoryChapters = calculateMaxHistoryChapters(modelContextSize, previousChapters.length);
-
       contextPrompt = '\n【历史剧情背景】\n';
-      const chaptersToSend = previousChapters.slice(-maxHistoryChapters);
+      const chaptersToSend = previousChapters.slice(-3); // 只取最近3章
 
-      if (maxHistoryChapters >= 10) {
-        const recentChapters = chaptersToSend.slice(-5);
-        const olderChapters = chaptersToSend.slice(0, -5);
-
-        if (olderChapters.length > 0) {
-          contextPrompt += '前情提要：\n';
-          olderChapters.forEach((chap: any, idx: number) => {
-            contextPrompt += `第${chap.order}章 ${chap.title}：${chap.content?.substring(0, 100) || '（暂无内容）'}...\n`;
-          });
-        }
-
-        contextPrompt += '\n最近章节详情：\n';
-        recentChapters.forEach((chap: any) => {
-          contextPrompt += `\n第${chap.order}章 ${chap.title}\n${chap.content || '（暂无内容）'}\n`;
-        });
-      } else {
-        contextPrompt += '最近章节：\n';
-        chaptersToSend.forEach((chap: any) => {
-          contextPrompt += `第${chap.order}章 ${chap.title}：${chap.content?.substring(0, 200) || '（暂无内容）'}...\n`;
-        });
-      }
+      contextPrompt += '最近章节：\n';
+      chaptersToSend.forEach((chap: any) => {
+        contextPrompt += `第${chap.order}章 ${chap.title}：${chap.content?.substring(0, 200) || '（暂无内容）'}...\n`;
+      });
     }
 
     const systemPrompt = `你是一位专业的网络小说写作助手。你的任务是：
@@ -134,12 +85,35 @@ ${contextPrompt ? contextPrompt : ''}`;
       }
     }
 
-    const messages = normalizeMessages([
+    const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userContent },
-    ]);
+    ];
 
-    return createStreamResponse(messages, config);
+    // 创建流式响应
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of streamAiCall(messages, finalApiKey)) {
+            controller.enqueue(encoder.encode(chunk));
+          }
+        } catch (error) {
+          console.error('AI润色流式错误:', error);
+          controller.error(error);
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
   } catch (error) {
     console.error('AI润色错误:', error);
     return NextResponse.json(

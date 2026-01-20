@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
 import { taskManager } from '@/lib/task-manager';
+import { getApiKey, streamAiCall } from '@/lib/ai-route-helper';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -175,12 +175,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
+    // 获取 API Key（支持开发者模式和用户模式）
+    const apiKeyConfig = getApiKey(body.apiKey);
+    console.log('[GenerateFullOutline] API配置:', {
+      mode: apiKeyConfig.mode,
+      hasApiKey: !!apiKeyConfig.key
     });
-    const client = new LLMClient(config);
-    console.log('[GenerateFullOutline] LLMClient 初始化成功');
 
     // 创建流式响应
     const encoder = new TextEncoder();
@@ -266,14 +266,12 @@ ${avoidClichés ? '6. 避免常见套路（如：退婚、打脸、后宫等）'
 }`;
 
           try {
-            const worldStream = client.stream([
-              { role: 'user', content: worldPrompt }
-            ], { temperature: 0.7 });
-
-            for await (const chunk of worldStream) {
-              if (chunk.content) {
-                worldContent += chunk.content.toString();
-              }
+            for await (const chunk of streamAiCall(
+              [{ role: 'user', content: worldPrompt }],
+              body.apiKey,
+              { temperature: 0.7 }
+            )) {
+              worldContent += chunk;
             }
 
             // 提取JSON
@@ -391,14 +389,12 @@ ${protagonistGoal ? `- 主角目标：${protagonistGoal}` : ''}
 
           let characterContent = '';
           try {
-            const characterStream = client.stream([
-              { role: 'user', content: characterPrompt }
-            ], { temperature: 0.7 });
-
-            for await (const chunk of characterStream) {
-              if (chunk.content) {
-                characterContent += chunk.content.toString();
-              }
+            for await (const chunk of streamAiCall(
+              [{ role: 'user', content: characterPrompt }],
+              body.apiKey,
+              { temperature: 0.7 }
+            )) {
+              characterContent += chunk;
             }
 
             // 提取JSON数组
@@ -527,14 +523,12 @@ ${avoidClichés ? '7. 避免常见套路（如：退婚、打脸、后宫等）'
 }`;
 
           try {
-            const storyStream = client.stream([
-              { role: 'user', content: storyPrompt }
-            ], { temperature: 0.7 });
-
-            for await (const chunk of storyStream) {
-              if (chunk.content) {
-                storyContent += chunk.content.toString();
-              }
+            for await (const chunk of streamAiCall(
+              [{ role: 'user', content: storyPrompt }],
+              body.apiKey,
+              { temperature: 0.7 }
+            )) {
+              storyContent += chunk;
             }
 
             // 提取JSON
@@ -688,14 +682,12 @@ ${customRequirements ? `9. 其他要求：${customRequirements}` : ''}
 
             let chapterContent = '';
             try {
-              const chapterStream = client.stream([
-                { role: 'user', content: chapterPrompt }
-              ], { temperature: 0.7 });
-
-              for await (const chunk of chapterStream) {
-                if (chunk.content) {
-                  chapterContent += chunk.content.toString();
-                }
+              for await (const chunk of streamAiCall(
+                [{ role: 'user', content: chapterPrompt }],
+                body.apiKey,
+                { temperature: 0.7 }
+              )) {
+                chapterContent += chunk;
               }
 
               // 提取JSON数组

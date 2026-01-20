@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
-import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
 import { detectIssuesBatch } from '@/lib/issue-detector';
 import { checkContentPenaltiesSmart, PenaltyLevel, getPenaltyMessage } from '@/lib/penalty-system';
-import { getApiKey } from '@/lib/ai-config';
+import { getApiKey, streamAiCall, callAi } from '@/lib/ai-route-helper';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,8 +52,8 @@ function generatePenaltyPrompt(): string {
 
 // 带重试的LLM调用函数
 async function callLLMWithRetry(
-  client: any,
   messages: any[],
+  apiKey: string,
   options: any,
   maxRetries: number = 3,
   operationName: string
@@ -65,15 +63,7 @@ async function callLLMWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[BatchGenerate] ${operationName} 第${attempt}次尝试...`);
-      let content = '';
-
-      // 使用stream而不是invoke
-      const stream = client.stream(messages, options);
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          content += chunk.content.toString();
-        }
-      }
+      const content = await callAi(messages, apiKey, options);
 
       if (!content || content.length < 10) {
         throw new Error(`${operationName} 返回内容为空或过短`);
@@ -129,19 +119,16 @@ export async function POST(request: NextRequest) {
       apiKey
     } = body;
 
-    // 获取 API Key（优先使用前端传来的，否则使用环境变量）
+    // 获取 API Key
     let finalApiKey: string;
-    let useSiliconFlow = false;
 
     try {
-      if (apiKey && apiKey.trim()) {
-        finalApiKey = apiKey.trim();
-        useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
-      } else {
-        const config = getApiKey();
-        finalApiKey = config.key; // 使用环境变量（Coze）
-        useSiliconFlow = false;
-      }
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+      console.log('[BatchGenerate] API配置:', {
+        mode: apiKeyConfig.mode,
+        hasApiKey: !!finalApiKey
+      });
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'API 密钥未配置' },
@@ -166,12 +153,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
-    console.log('[BatchGenerate] LLMClient 初始化成功');
+    console.log('[BatchGenerate] 开始处理批量生成');
 
     // 创建流式响应
     const encoder = new TextEncoder();
@@ -307,8 +289,8 @@ ${outline}
 
               // 使用带重试的函数生成大纲
               const chapterOutline = await callLLMWithRetry(
-                client,
                 chapterOutlineMessages,
+                finalApiKey,
                 { temperature: 0.7 },
                 3,
                 `第${chapterIndex}章-大纲生成`
@@ -504,8 +486,8 @@ ${worldSettings.slice(0, 3).map((w: any) => `- ${w.name}：${w.description}`).jo
 
               // 使用带重试的函数生成内容
               const chapterContent = await callLLMWithRetry(
-                client,
                 chapterContentMessages,
+                finalApiKey,
                 { temperature: 0.9 },
                 3,
                 `第${chapterIndex}章-内容生成`
@@ -601,8 +583,8 @@ ${finalContent.slice(-500)}
 
                   // 生成补充内容
                   const supplementContent = await callLLMWithRetry(
-                    client,
                     supplementMessages,
+                    finalApiKey,
                     { temperature: 0.8 },
                     3,
                     `第${chapterIndex}章-字数补充(${supplementCount})`
@@ -876,11 +858,11 @@ ${worldSettings.slice(0, 3).map((w: any) => `- ${w.name}：${w.description}`).jo
 
                 try {
                   const rewriteContent = await callLLMWithRetry(
-                    client,
                     [
                       { role: 'system', content: rewriteSystemPrompt },
                       { role: 'user', content: rewriteUserPrompt }
                     ],
+                    finalApiKey,
                     { temperature: 0.9 },
                     3,
                     `第${rewriteAttempt}次重写-第${chapterIndex}章`
@@ -1097,8 +1079,8 @@ ${issuesText}
 
                 // 调用LLM修复
                 const fixedContent = await callLLMWithRetry(
-                  client,
                   fixMessages,
+                  finalApiKey,
                   { temperature: 0.7 },
                   2, // 修复只重试2次
                   `${chapter.title}-自动修复`
