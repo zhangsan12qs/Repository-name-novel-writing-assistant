@@ -3,7 +3,7 @@ import { getApiKey, callAi } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { genre, theme, protagonist, targetChapterCount, dissatisfactionReason, idealContent, apiKey } = await request.json();
+    const { genre, theme, protagonist, targetChapterCount, dissatisfactionReason, idealContent, apiKey, modelConfig } = await request.json();
 
     // 获取 API Key
     let finalApiKey: string;
@@ -106,13 +106,29 @@ ${idealContent}
       { role: 'user', content: userPrompt },
     ];
 
-    const response = await callAi(messages, finalApiKey, { temperature: 0.7 });
+    // 使用模型配置或默认值
+    const options = {
+      temperature: modelConfig?.temperature ?? 0.7,
+      model: modelConfig?.model,
+      maxTokens: modelConfig?.maxTokens,
+      topP: modelConfig?.topP
+    };
+
+    const response = await callAi(messages, finalApiKey, options);
+
+    if (!response || response.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'API 返回内容为空，请重试' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ content: response });
   } catch (error) {
     console.error('AI生成大纲错误:', error);
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
     return NextResponse.json(
-      { error: 'AI生成大纲失败' },
+      { error: `AI生成大纲失败: ${errorMessage}` },
       { status: 500 }
     );
   }

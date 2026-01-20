@@ -72,6 +72,11 @@ export class SiliconFlowClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[SiliconFlow] API 错误响应:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
       throw new Error(`硅基流动 API 错误: ${response.status} - ${errorText}`);
     }
 
@@ -152,10 +157,22 @@ export class SiliconFlowClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[SiliconFlow] 非流式 API 错误响应:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
       throw new Error(`硅基流动 API 错误: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+    const content = data.choices[0]?.message?.content || '';
+
+    if (!content) {
+      console.error('[SiliconFlow] API 返回内容为空:', data);
+      throw new Error('API 返回内容为空');
+    }
+
+    return content;
   }
 }

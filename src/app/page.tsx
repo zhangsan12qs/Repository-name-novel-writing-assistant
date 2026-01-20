@@ -2822,11 +2822,27 @@ ${data.story.ending || ''}`;
           genre: aiPrompt.split(',')[0]?.trim() || '玄幻',
           theme: aiPrompt.split(',')[1]?.trim() || '成长',
           protagonist: aiPrompt.split(',')[2]?.trim() || '',
-          apiKey: aiConfig.apiKey
+          apiKey: aiConfig.apiKey,
+          modelConfig: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature,
+            maxTokens: aiConfig.maxTokens,
+            topP: aiConfig.topP
+          }
         }),
       });
 
+      if (!outlineResponse.ok) {
+        const errorData = await outlineResponse.json();
+        throw new Error(errorData.error || `API 错误: ${outlineResponse.status}`);
+      }
+
       const outlineData = await outlineResponse.json();
+
+      if (!outlineData.content) {
+        throw new Error('大纲生成成功，但返回内容为空，请重试');
+      }
+
       setOutline(outlineData.content);
 
       // 2. 从大纲中提取角色并生成
@@ -2882,7 +2898,8 @@ ${data.story.ending || ''}`;
       setActiveTab('characters');
     } catch (error) {
       console.error('批量生成错误:', error);
-      setAiResult('批量生成失败，请重试');
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      setAiResult(`批量生成失败：${errorMessage}\n\n请检查：\n1. API Key 是否正确配置\n2. 网络连接是否正常\n3. 硅基流动 API 服务是否可用`);
     } finally {
       setBatchGenerating(false);
     }
