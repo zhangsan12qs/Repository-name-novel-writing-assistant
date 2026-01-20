@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GroqClient, GroqMessage } from '@/lib/groq-client';
 import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
 import { generateRandomName, validateNameQuality } from '@/lib/name-generator';
-import { getApiKey } from '@/lib/ai-config';
+import { getApiKey } from '@/lib/ai-route-helper';
 
 export const maxDuration = 60;
 
@@ -186,19 +185,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 获取 API Key（优先使用前端传来的，否则使用环境变量）
+    // 获取 API Key
     let finalApiKey: string;
-    let useSiliconFlow = false;
 
     try {
-      if (apiKey && apiKey.trim()) {
-        finalApiKey = apiKey.trim();
-        useSiliconFlow = true; // 前端传来的 API Key，使用硅基流动
-      } else {
-        const config = getApiKey();
-        finalApiKey = config.key; // 使用环境变量（Coze）
-        useSiliconFlow = false;
-      }
+      finalApiKey = getApiKey(apiKey);
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'API 密钥未配置' },
@@ -251,41 +242,22 @@ ${region ? `- 地域特色：${region}` : ''}
     // 使用LLM生成名字
     let result = '';
 
-    if (useSiliconFlow) {
-      // 使用硅基流动 API
-      const siliconClient = new SiliconFlowClient(finalApiKey);
-      const messages: SiliconFlowMessage[] = [
-        { role: 'user', content: prompt }
-      ];
+    // 使用硅基流动 API
+    const siliconClient = new SiliconFlowClient(finalApiKey);
+    const messages: SiliconFlowMessage[] = [
+      { role: 'user', content: prompt }
+    ];
 
-      const response = await siliconClient.streamChat(messages, {
-        model: 'deepseek-ai/DeepSeek-V3',
-        temperature: 0.8,
-        maxTokens: 2000,
-        topP: 0.9,
-      });
+    const response = await siliconClient.streamChat(messages, {
+      model: 'deepseek-ai/DeepSeek-V3',
+      temperature: 0.8,
+      maxTokens: 2000,
+      topP: 0.9,
+    });
 
-      // 硅基流动返回的是流式数据，这里我们收集所有内容
-      for await (const chunk of response) {
-        result += chunk;
-      }
-    } else {
-      // 使用 Groq（开发者模式）
-      const groqClient = new GroqClient(finalApiKey);
-      const messages: GroqMessage[] = [
-        { role: 'user', content: prompt }
-      ];
-
-      const response = await groqClient.streamChat(messages, {
-        model: 'llama-3.1-70b-versatile',
-        temperature: 0.8,
-        maxTokens: 2000,
-        topP: 1.0,
-      });
-
-      for await (const chunk of response) {
-        result += chunk;
-      }
+    // 硅基流动返回的是流式数据，这里我们收集所有内容
+    for await (const chunk of response) {
+      result += chunk;
     }
 
     console.log('[起名系统] LLM原始输出:', result);
