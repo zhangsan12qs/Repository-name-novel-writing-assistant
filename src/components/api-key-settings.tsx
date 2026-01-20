@@ -117,10 +117,13 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
   const [maxTokens, setMaxTokens] = useState(DEFAULT_CONFIG.maxTokens);
   const [topP, setTopP] = useState(DEFAULT_CONFIG.topP);
 
-  // 加载已保存的配置
+  // 加载已保存的配置（优化性能，避免阻塞 UI）
   useEffect(() => {
     if (open) {
-      loadConfig();
+      // 使用 requestAnimationFrame 将操作延迟到下一个渲染帧，避免阻塞 UI
+      requestAnimationFrame(() => {
+        loadConfig();
+      });
     }
   }, [open]);
 
@@ -131,6 +134,7 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
     const savedTokens = localStorage.getItem('siliconflow_maxTokens');
     const savedTopP = localStorage.getItem('siliconflow_topP');
 
+    // 一次性批量更新状态，减少重渲染
     if (savedKey) {
       setApiKey(savedKey);
       setSaved(true);

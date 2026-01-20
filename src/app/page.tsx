@@ -4485,14 +4485,11 @@ ${data.story.ending || ''}`;
           <Button
             variant="ghost"
             className="w-full justify-start text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 h-8 text-xs"
-            onClick={(e) => {
-              console.log('[AI配置] 按钮被点击', e);
-              try {
+            onClick={() => {
+              // 使用 requestAnimationFrame 避免阻塞 UI
+              requestAnimationFrame(() => {
                 setApiKeyDialogOpen(true);
-                console.log('[AI配置] 对话框状态已更新');
-              } catch (error) {
-                console.error('[AI配置] 更新对话框状态失败:', error);
-              }
+              });
             }}
           >
             <Sparkles className="h-3.5 w-3.5 mr-2" />
