@@ -1,18 +1,9 @@
 /**
  * AI 路由辅助函数
- * 统一处理不同 AI 模式的调用
+ * 统一处理 AI 调用（硅基流动）
  */
 
-import { GroqClient, GroqMessage } from './groq-client';
-import { SiliconFlowClient, SiliconFlowMessage } from './siliconflow-client';
-
-/**
- * AI 模式枚举
- */
-export enum AiMode {
-  DEVELOPER = 'developer', // 开发者模式（Groq 免费 AI）
-  USER = 'user',           // 用户模式（硅基流动）
-}
+import { SiliconFlowClient } from './siliconflow-client';
 
 /**
  * AI 客户端接口（统一接口）
@@ -26,7 +17,6 @@ export interface AiClient {
  */
 export interface AiConfig {
   apiKey: string;
-  mode: AiMode;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -34,31 +24,10 @@ export interface AiConfig {
 }
 
 /**
- * 根据 API Key 和模式创建对应的 AI 客户端
+ * 创建硅基流动 AI 客户端
  */
-export function createAiClient(apiKey: string, mode: AiMode = AiMode.DEVELOPER): AiClient {
-  if (mode === AiMode.USER) {
-    // 用户模式：使用硅基流动
-    return new SiliconFlowClient(apiKey);
-  } else {
-    // 开发者模式：使用 Groq
-    return new GroqClient(apiKey);
-  }
-}
-
-/**
- * 获取 AI 模式（根据 API Key 来源）
- * @param apiKey - 前端传递的 API Key
- * @returns AI 模式
- */
-export function getAiMode(apiKey?: string): AiMode {
-  // 如果前端传递了 API Key，使用用户模式
-  if (apiKey && apiKey.trim()) {
-    return AiMode.USER;
-  }
-
-  // 否则使用开发者模式
-  return AiMode.DEVELOPER;
+export function createAiClient(apiKey: string): AiClient {
+  return new SiliconFlowClient(apiKey);
 }
 
 /**
@@ -66,11 +35,10 @@ export function getAiMode(apiKey?: string): AiMode {
  */
 export function extractAiConfigFromRequest(body: any): AiConfig {
   const { apiKey, model, temperature, maxTokens, topP } = body;
-  const { key, mode } = getApiKey(apiKey);
+  const key = getApiKey(apiKey);
 
   return {
     apiKey: key,
-    mode,
     model,
     temperature,
     maxTokens,
@@ -86,46 +54,32 @@ export function getAiConfig(requestApiKey?: string): AiConfig {
 }
 
 /**
- * 获取 API Key
- * 优先级：前端传来的 > 环境变量（GROQ_API_KEY）
+ * 获取 API Key（强制要求用户提供）
  */
-export function getApiKey(requestApiKey?: string): { key: string; mode: AiMode } {
-  const mode = getAiMode(requestApiKey);
-
-  if (mode === AiMode.USER) {
-    if (!requestApiKey || !requestApiKey.trim()) {
-      throw new Error('用户模式需要提供 API Key');
-    }
-    return { key: requestApiKey.trim(), mode: AiMode.USER };
+export function getApiKey(requestApiKey?: string): string {
+  if (!requestApiKey || !requestApiKey.trim()) {
+    throw new Error(
+      '请先配置 API Key！\n\n' +
+      '配置步骤：\n' +
+      '1. 点击左侧"大模型配置"按钮\n' +
+      '2. 选择"用户配置模式"\n' +
+      '3. 输入硅基流动 API Key\n' +
+      '4. 点击"保存配置"\n\n' +
+      '获取免费 API Key：https://siliconflow.cn/'
+    );
   }
-
-  // 开发者模式：使用环境变量 GROQ_API_KEY
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) {
-    throw new Error('开发者模式需要配置 GROQ_API_KEY 环境变量。请在 Vercel 部署配置中添加 GROQ_API_KEY，或联系管理员。');
-  }
-
-  return { key: groqApiKey, mode: AiMode.DEVELOPER };
+  return requestApiKey.trim();
 }
 
 /**
- * 获取默认模型配置
+ * 获取默认模型配置（硅基流动）
  */
-export function getDefaultConfig(mode: AiMode): {
+export function getDefaultConfig(): {
   model: string;
   temperature: number;
   maxTokens: number;
   topP: number;
 } {
-  if (mode === AiMode.DEVELOPER) {
-    return {
-      model: 'llama-3.1-70b-versatile', // Groq 最强模型
-      temperature: 0.75,
-      maxTokens: 8192,
-      topP: 1.0,
-    };
-  }
-
   return {
     model: 'Qwen/Qwen2.5-72B-Instruct', // 硅基流动推荐模型
     temperature: 0.8,
@@ -135,9 +89,9 @@ export function getDefaultConfig(mode: AiMode): {
 }
 
 /**
- * 转换消息格式（统一为 Groq 格式）
+ * 转换消息格式（统一格式）
  */
-export function normalizeMessages(messages: any[]): GroqMessage[] {
+export function normalizeMessages(messages: any[]): any[] {
   return messages.map(msg => ({
     role: msg.role || 'user',
     content: msg.content || '',
@@ -181,9 +135,9 @@ export async function* streamAiCall(
     topP?: number;
   }
 ): AsyncGenerator<string, void, unknown> {
-  const { key, mode } = getApiKey(apiKey);
-  const client = createAiClient(key, mode);
-  const defaultConfig = getDefaultConfig(mode);
+  const key = getApiKey(apiKey);
+  const client = createAiClient(key);
+  const defaultConfig = getDefaultConfig();
   const finalOptions = {
     model: options?.model || defaultConfig.model,
     temperature: options?.temperature ?? defaultConfig.temperature,
@@ -192,7 +146,6 @@ export async function* streamAiCall(
   };
 
   console.log('[AI调用] 参数:', {
-    mode,
     model: finalOptions.model,
     temperature: finalOptions.temperature,
     maxTokens: finalOptions.maxTokens,

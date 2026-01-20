@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -57,7 +58,9 @@ import {
   Download,
   Lock,
   RotateCcw,
-  X
+  X,
+  Key,
+  Star
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 // 导入性能监控工具
@@ -290,6 +293,30 @@ export default function NovelEditor() {
 
   // 大模型配置对话框状态
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+
+  // 首次使用引导状态
+  const [showFirstTimeGuide, setShowFirstTimeGuide] = useState(false);
+
+  // 检查是否首次使用，如果没有配置 API Key 则显示引导
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasSeenGuide = localStorage.getItem('has_seen_api_key_guide');
+      const hasApiKey = localStorage.getItem('siliconflow_api_key');
+
+      if (!hasSeenGuide && !hasApiKey) {
+        setShowFirstTimeGuide(true);
+      }
+    }
+  }, []);
+
+  // 标记已看过引导
+  const handleCloseGuide = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('has_seen_api_key_guide', 'true');
+    }
+    setShowFirstTimeGuide(false);
+    setApiKeyDialogOpen(true);
+  };
 
   // 版本历史相关状态
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
@@ -8696,6 +8723,82 @@ ${data.story.ending || ''}`;
             >
               <Download className="h-4 w-4 mr-2" />
               开始导出
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 首次使用引导弹窗 */}
+      <Dialog open={showFirstTimeGuide} onOpenChange={(open) => !open && handleCloseGuide()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Sparkles className="h-6 w-6 text-purple-600" />
+              欢迎使用网络小说创作助手
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              开始您的智能创作之旅，首先需要配置 API Key
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
+              <Key className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <strong>🔑 如何获取免费 API Key：</strong>
+                <br/>
+                1. 访问 <a href="https://siliconflow.cn/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline hover:no-underline">https://siliconflow.cn/</a>
+                <br/>
+                2. 注册/登录账号（完全免费）
+                <br/>
+                3. 进入「API Keys」页面
+                <br/>
+                4. 点击「Create API Key」生成密钥
+                <br/>
+                5. 复制 API Key 并粘贴到配置界面
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                支持的强大模型
+              </h4>
+              <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>Qwen2.5-72B</strong> - 72B参数，32k上下文，顶级长篇能力</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>DeepSeek-V3</strong> - 最新旗舰，64k上下文，推理能力极强</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>Yi-1.5-34B</strong> - 64k上下文，优秀中文创作能力</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>更多模型</strong> - 支持性价比和轻量级模型，灵活选择</span>
+                </div>
+              </div>
+            </div>
+
+            <Alert className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 dark:border-green-800">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                <strong>✅ 完全免费</strong>：新用户注册即可获得免费额度，支持 1000 章超长篇小说创作
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleCloseGuide}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              立即配置 API Key
             </Button>
           </DialogFooter>
         </DialogContent>

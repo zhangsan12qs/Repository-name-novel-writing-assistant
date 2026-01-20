@@ -175,11 +175,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取 API Key（支持开发者模式和用户模式）
-    const apiKeyConfig = getApiKey(body.apiKey);
+    // 获取 API Key
+    const apiKey = getApiKey(body.apiKey);
     console.log('[GenerateFullOutline] API配置:', {
-      mode: apiKeyConfig.mode,
-      hasApiKey: !!apiKeyConfig.key
+      hasApiKey: !!apiKey
     });
 
     // 创建流式响应

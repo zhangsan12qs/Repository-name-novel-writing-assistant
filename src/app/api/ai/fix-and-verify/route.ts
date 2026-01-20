@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
     // 获取 API Key
     let finalApiKey: string;
     try {
-      const apiKeyConfig = getApiKey(apiKey);
-      finalApiKey = apiKeyConfig.key;
+      finalApiKey = getApiKey(apiKey);
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : 'API 密钥未配置' },

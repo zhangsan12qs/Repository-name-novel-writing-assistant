@@ -123,10 +123,8 @@ export async function POST(request: NextRequest) {
     let finalApiKey: string;
 
     try {
-      const apiKeyConfig = getApiKey(apiKey);
-      finalApiKey = apiKeyConfig.key;
+      finalApiKey = getApiKey(apiKey);
       console.log('[BatchGenerate] API配置:', {
-        mode: apiKeyConfig.mode,
         hasApiKey: !!finalApiKey
       });
     } catch (error) {
