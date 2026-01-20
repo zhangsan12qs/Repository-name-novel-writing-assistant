@@ -184,12 +184,30 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
 
   const handleSaveUserConfig = async () => {
     if (!apiKey.trim()) {
+      console.warn('[AI配置] API Key 为空，跳过保存');
       return;
     }
+
+    console.log('[AI配置] 开始保存用户配置', {
+      apiKey: apiKey.substring(0, 10) + '...',
+      selectedModel,
+      temperature,
+      maxTokens,
+      topP
+    });
 
     setSaving(true);
 
     try {
+      // 检查 localStorage 是否可用
+      if (typeof window === 'undefined') {
+        throw new Error('window 对象未定义');
+      }
+
+      if (typeof localStorage === 'undefined') {
+        throw new Error('localStorage 未定义');
+      }
+
       // 保存到 localStorage
       localStorage.setItem('siliconflow_api_key', apiKey.trim());
       localStorage.setItem('siliconflow_model', selectedModel);
@@ -197,14 +215,17 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
       localStorage.setItem('siliconflow_maxTokens', maxTokens.toString());
       localStorage.setItem('siliconflow_topP', topP.toString());
 
+      console.log('[AI配置] 用户配置已保存到 localStorage');
       setSaved(true);
 
       setTimeout(() => {
         setSaving(false);
+        console.log('[AI配置] 保存状态已重置');
       }, 500);
     } catch (error) {
-      console.error('保存配置失败:', error);
+      console.error('[AI配置] 保存配置失败:', error);
       setSaving(false);
+      alert('保存配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -219,21 +240,41 @@ export default function ApiKeySettings({ open, onOpenChange }: ApiKeySettingsPro
   };
 
   const handleSaveDeveloperConfig = async () => {
+    console.log('[AI配置] 开始保存开发者配置', {
+      devModel,
+      devTemperature,
+      devMaxTokens,
+      devTopP
+    });
+
     setSaving(true);
 
     try {
+      // 检查 localStorage 是否可用
+      if (typeof window === 'undefined') {
+        throw new Error('window 对象未定义');
+      }
+
+      if (typeof localStorage === 'undefined') {
+        throw new Error('localStorage 未定义');
+      }
+
       localStorage.setItem('groq_model', devModel);
       localStorage.setItem('groq_temperature', devTemperature.toString());
       localStorage.setItem('groq_maxTokens', devMaxTokens.toString());
       localStorage.setItem('groq_topP', devTopP.toString());
 
+      console.log('[AI配置] 开发者配置已保存到 localStorage');
+
       setTimeout(() => {
         setSaving(false);
         setSaved(true);
+        console.log('[AI配置] 保存状态已重置');
       }, 500);
     } catch (error) {
-      console.error('保存配置失败:', error);
+      console.error('[AI配置] 保存配置失败:', error);
       setSaving(false);
+      alert('保存配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
