@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Sparkles, Loader2, CheckCircle, BookOpen, Users, Globe, FileText, User, Zap, Heart, Swords, Map, XCircle, ChevronDown, ChevronUp, Activity } from 'lucide-react';
+import { getUserAiConfig } from '@/lib/ai-config-client';
 
 interface Props {
   onGenerateComplete: (data: any) => void;
@@ -285,14 +286,27 @@ export default function AutoOutlineDialog({ onGenerateComplete, activeTask }: Pr
     setGeneratedData(null);
 
     try {
+      // 获取 AI 配置
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/generate-full-outline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          apiKey: aiConfig.apiKey,
+          modelConfig: {
+            model: aiConfig.model,
+            temperature: aiConfig.temperature,
+            maxTokens: aiConfig.maxTokens,
+            topP: aiConfig.topP
+          }
+        })
       });
 
       if (!response.ok) {
-        throw new Error('请求失败');
+        const errorData = await response.json();
+        throw new Error(errorData.error || `请求失败 (${response.status})`);
       }
 
       const reader = response.body?.getReader();
