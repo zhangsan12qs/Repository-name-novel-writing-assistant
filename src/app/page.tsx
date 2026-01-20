@@ -71,6 +71,7 @@ import { indexedDBStore } from '@/lib/indexeddb-store';
 import { CharacterItem } from '@/components/character-item';
 import { ChapterItem } from '@/components/chapter-item';
 import { VirtualList } from '@/components/virtual-list';
+import { getUserAiConfig } from '@/lib/ai-config-client';
 import dynamic from 'next/dynamic';
 
 // 使用动态导入和懒加载优化大型组件
@@ -1372,13 +1373,14 @@ ${data.story.ending || ''}`;
 
       console.log('[改人名] 开始生成名字:', request);
 
-      const savedApiKey = localStorage.getItem('siliconflow_api_key');
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/generate-name', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...request,
-          apiKey: savedApiKey || undefined
+          apiKey: aiConfig.apiKey
         })
       });
 
@@ -1444,13 +1446,14 @@ ${data.story.ending || ''}`;
             avoidNames: characters.map(c => c.name).concat(Object.values(oldToNewNames))
           };
 
-          const savedApiKey = localStorage.getItem('siliconflow_api_key');
+          const aiConfig = getUserAiConfig();
+
           const response = await fetch('/api/ai/generate-name', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               ...request,
-              apiKey: savedApiKey || undefined
+              apiKey: aiConfig.apiKey
             })
           });
 
@@ -1935,6 +1938,9 @@ ${data.story.ending || ''}`;
         setAiLoading(false);
         return;
       }
+
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/auto-write', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1945,6 +1951,7 @@ ${data.story.ending || ''}`;
           characters: characters.filter(c => aiPrompt?.includes(c.name)),
           worldSetting: worldSettings.map(w => w.name + '：' + w.description).join('\n'),
           articleRequirements: articleRequirements,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2008,31 +2015,15 @@ ${data.story.ending || ''}`;
         body.articleRequirements = articleRequirements;
       }
 
-      // 添加 AI 模式和配置信息
-      const aiMode = localStorage.getItem('ai_mode') || 'developer';
-      body.aiMode = aiMode;
-
-      if (aiMode === 'user') {
-        // 用户模式：使用用户配置的 API Key
-        const savedApiKey = localStorage.getItem('siliconflow_api_key');
-        if (savedApiKey) {
-          body.apiKey = savedApiKey;
-          body.modelConfig = {
-            model: localStorage.getItem('siliconflow_model') || 'deepseek-ai/DeepSeek-V3',
-            temperature: parseFloat(localStorage.getItem('siliconflow_temperature') || '0.8'),
-            maxTokens: parseInt(localStorage.getItem('siliconflow_maxTokens') || '2000'),
-            topP: parseFloat(localStorage.getItem('siliconflow_topP') || '0.9'),
-          };
-        }
-      } else {
-        // 开发者模式：使用 Groq 配置
-        body.modelConfig = {
-          model: localStorage.getItem('groq_model') || 'llama-3.1-8b-instant',
-          temperature: parseFloat(localStorage.getItem('groq_temperature') || '0.7'),
-          maxTokens: parseInt(localStorage.getItem('groq_maxTokens') || '4096'),
-          topP: parseFloat(localStorage.getItem('groq_topP') || '1.0'),
-        };
-      }
+      // 使用统一的工具函数获取 AI 配置
+      const aiConfig = getUserAiConfig();
+      body.apiKey = aiConfig.apiKey;
+      body.modelConfig = {
+        model: aiConfig.model,
+        temperature: aiConfig.temperature,
+        maxTokens: aiConfig.maxTokens,
+        topP: aiConfig.topP,
+      };
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -2076,6 +2067,8 @@ ${data.story.ending || ''}`;
     setAiResult('');
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/regenerate-outline-from-world', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2084,6 +2077,7 @@ ${data.story.ending || ''}`;
           worldSettings: worldSettings,
           characters: characters,
           title: title,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2127,6 +2121,8 @@ ${data.story.ending || ''}`;
     setAiResult('');
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/adjust-outline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2137,6 +2133,7 @@ ${data.story.ending || ''}`;
           characters,
           worldSettings,
           title,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2178,6 +2175,8 @@ ${data.story.ending || ''}`;
     setAiResult('');
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/direct-edit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2185,6 +2184,7 @@ ${data.story.ending || ''}`;
           content: currentChapter?.content,
           feedbackSettings: feedbackSettings,
           articleRequirements: articleRequirements,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2241,6 +2241,9 @@ ${data.story.ending || ''}`;
           context: '',
         };
       }
+
+      const aiConfig = getUserAiConfig();
+      body.apiKey = aiConfig.apiKey;
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -2340,7 +2343,8 @@ ${data.story.ending || ''}`;
         controller.abort();
       }, 30 * 60 * 1000); // 30分钟
 
-      const savedApiKey = localStorage.getItem('siliconflow_api_key');
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/batch-generate-chapters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2353,7 +2357,7 @@ ${data.story.ending || ''}`;
           existingChapters: chapters,
           existingVolumes: volumes,
           title,
-          apiKey: savedApiKey || undefined
+          apiKey: aiConfig.apiKey
         }),
         signal: controller.signal,
       });
@@ -2630,7 +2634,8 @@ ${data.story.ending || ''}`;
       console.log('[一键修改] 开始修复章节，数量:', batchGenerateResult.chapters.length);
 
       // 调用批量生成API，但传入修复模式标志
-      const savedApiKey = localStorage.getItem('siliconflow_api_key');
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/batch-generate-chapters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2646,7 +2651,7 @@ ${data.story.ending || ''}`;
           fixMode: true, // 修复模式标志
           chaptersToFix: batchGenerateResult.chapters, // 需要修复的章节
           qualityCheck: batchGenerateResult.qualityCheck, // 传入质量检查结果
-          apiKey: savedApiKey || undefined
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2808,6 +2813,8 @@ ${data.story.ending || ''}`;
     try {
       // 1. 生成大纲
       setAiResult('正在生成大纲...');
+      const aiConfig = getUserAiConfig();
+
       const outlineResponse = await fetch('/api/ai/outline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2815,6 +2822,7 @@ ${data.story.ending || ''}`;
           genre: aiPrompt.split(',')[0]?.trim() || '玄幻',
           theme: aiPrompt.split(',')[1]?.trim() || '成长',
           protagonist: aiPrompt.split(',')[2]?.trim() || '',
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2829,6 +2837,7 @@ ${data.story.ending || ''}`;
           genre: '角色生成',
           theme: aiPrompt,
           protagonist: aiPrompt,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -2975,6 +2984,8 @@ ${data.story.ending || ''}`;
 
       console.log(`[改写] 将要改写的内容长度:`, contentToRewrite.length);
 
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/rewrite-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2982,6 +2993,7 @@ ${data.story.ending || ''}`;
           analysisResult: dataToRewrite,
           part,
           feedbackSettings: rewriteFeedbackSettings,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3068,10 +3080,15 @@ ${data.story.ending || ''}`;
     setShowGenerateAll(false);
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/generate-all', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(generateParams),
+        body: JSON.stringify({
+          ...generateParams,
+          apiKey: aiConfig.apiKey
+        }),
       });
 
       if (!response.ok) {
@@ -3176,6 +3193,8 @@ ${data.story.ending || ''}`;
       setAiResult('正在分析大纲并创建生成任务...');
 
       // 调用重新生成API
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/regenerate-from-outline', {
         method: 'POST',
         headers: {
@@ -3187,6 +3206,7 @@ ${data.story.ending || ''}`;
           worldSettings,
           existingVolumes: volumes,
           existingChapters: chapters,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3239,6 +3259,8 @@ ${data.story.ending || ''}`;
     setShowPlotCheck(true);
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/check-plot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3248,6 +3270,7 @@ ${data.story.ending || ''}`;
           chapters,
           characters,
           worldSettings,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3328,6 +3351,8 @@ ${data.story.ending || ''}`;
     setFixingResult('');
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/fix-issue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3337,6 +3362,7 @@ ${data.story.ending || ''}`;
           content: targetChapter.content,
           characters,
           worldSettings,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3381,6 +3407,8 @@ ${data.story.ending || ''}`;
     setVerifyResult(null);
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/fix-and-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3396,6 +3424,7 @@ ${data.story.ending || ''}`;
           characters,
           worldSettings,
           maxIterations: 3,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3524,6 +3553,8 @@ ${data.story.ending || ''}`;
         });
       }
 
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/batch-fix-issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3533,6 +3564,7 @@ ${data.story.ending || ''}`;
           content: targetChapter.content,
           characters,
           worldSettings,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -3597,6 +3629,8 @@ ${data.story.ending || ''}`;
     setVerifyResult(null);
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/fix-and-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3607,6 +3641,7 @@ ${data.story.ending || ''}`;
           characters,
           worldSettings,
           maxIterations: 3,
+          apiKey: aiConfig.apiKey
         }),
       });
 
@@ -4101,12 +4136,15 @@ ${data.story.ending || ''}`;
     });
 
     try {
+      const aiConfig = getUserAiConfig();
+
       const response = await fetch('/api/ai/analyze-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookContent: bookContentToAnalyze,
           partialResults: continueFromPrevious ? partialResults : undefined,
+          apiKey: aiConfig.apiKey
         }),
       });
 
