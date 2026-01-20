@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { getApiKey, callAi } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { role, personality, background } = await request.json();
+    const { role, personality, background, apiKey } = await request.json();
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    // 获取 API Key
+    let finalApiKey: string;
+    try {
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
     const systemPrompt = `你是一位专业的网络小说人物设定助手。你的任务是：
 1. 根据用户提供的线索生成完整的角色设定
@@ -75,9 +81,9 @@ export async function POST(request: NextRequest) {
 - 重要关系：XXX`;
 
     const messages = [
-      { role: 'system' as const, content: systemPrompt },
+      { role: 'system', content: systemPrompt },
       {
-        role: 'user' as const,
+        role: 'user',
         content: `请生成一个角色设定：
 
 角色定位：${role || '主角'}
@@ -86,11 +92,9 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const response = await client.invoke(messages, {
-      temperature: 0.7,
-    });
+    const response = await callAi(messages, finalApiKey, { temperature: 0.7 });
 
-    return NextResponse.json({ content: response.content });
+    return NextResponse.json({ content: response });
   } catch (error) {
     console.error('AI生成角色设定错误:', error);
     return NextResponse.json(

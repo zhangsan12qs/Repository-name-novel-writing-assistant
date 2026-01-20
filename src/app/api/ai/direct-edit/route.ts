@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { getApiKey, callAi } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, feedbackSettings, articleRequirements } = await request.json();
+    const { content, feedbackSettings, articleRequirements, apiKey } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -12,11 +12,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    // 获取 API Key
+    let finalApiKey: string;
+    try {
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
     const systemPrompt = `你是一位专业的网络小说编辑。你的任务是：
 1. 根据用户的反馈和要求，直接修改给定的文本内容
@@ -97,15 +103,13 @@ ${feedbackSettings.idealContent}
     userPrompt += `\n\n现在开始修改，直接输出修改后的完整内容：`;
 
     const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      { role: 'user' as const, content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ];
 
-    const response = await client.invoke(messages, {
-      temperature: 0.7,
-    });
+    const response = await callAi(messages, finalApiKey, { temperature: 0.7 });
 
-    return NextResponse.json({ content: response.content });
+    return NextResponse.json({ content: response });
   } catch (error) {
     console.error('直接编辑错误:', error);
     return NextResponse.json(

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { getApiKey, streamAiCall } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { chapterTitle, chapterOutline, previousContent, characters, worldSetting, articleRequirements } = await request.json();
+    const { chapterTitle, chapterOutline, previousContent, characters, worldSetting, articleRequirements, apiKey } = await request.json();
 
     if (!chapterTitle) {
       return NextResponse.json(
@@ -12,11 +12,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    // 获取 API Key
+    let finalApiKey: string;
+    try {
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
     const systemPrompt = `你是一位专业的网络小说作家。你的任务是根据提供的大纲自动撰写小说章节。
 
@@ -117,34 +123,32 @@ ${previousContent.slice(-500)}...\n`;
     }
 
     const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      { role: 'user' as const, content: userPrompt },
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
     ];
 
-    const stream = client.stream(messages, {
-      temperature: 0.9,
-    });
-
+    // 创建流式响应
     const encoder = new TextEncoder();
-    const readableStream = new ReadableStream({
+    const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of stream) {
-            if (chunk.content) {
-              controller.enqueue(encoder.encode(chunk.content.toString()));
-            }
+          for await (const chunk of streamAiCall(messages, finalApiKey, { temperature: 0.9 })) {
+            controller.enqueue(encoder.encode(chunk));
           }
-          controller.close();
         } catch (error) {
+          console.error('自动写作流式错误:', error);
           controller.error(error);
+        } finally {
+          controller.close();
         }
       },
     });
 
-    return new NextResponse(readableStream, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {

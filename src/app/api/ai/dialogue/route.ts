@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { getApiKey, callAi } from '@/lib/ai-route-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const { content, characterInfo, context } = await request.json();
+    const { content, characterInfo, context, apiKey } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -12,11 +12,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const config = new Config({
-      apiKey: process.env.COZE_WORKLOAD_IDENTITY_API_KEY,
-      baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-    });
-    const client = new LLMClient(config);
+    // 获取 API Key
+    let finalApiKey: string;
+    try {
+      const apiKeyConfig = getApiKey(apiKey);
+      finalApiKey = apiKeyConfig.key;
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'API 密钥未配置' },
+        { status: 401 }
+      );
+    }
 
     const systemPrompt = `你是一位专业的网络小说对白优化助手。你的任务是：
 1. 优化给定的对白内容
@@ -33,9 +39,9 @@ export async function POST(request: NextRequest) {
 - 适当加入肢体语言和神态描写（用括号标注）`;
 
     const messages = [
-      { role: 'system' as const, content: systemPrompt },
+      { role: 'system', content: systemPrompt },
       {
-        role: 'user' as const,
+        role: 'user',
         content: `请优化以下对白，直接输出优化后的内容，不要解释：
 
 ${content}
@@ -45,11 +51,9 @@ ${context ? `场景背景：${context}` : ''}`,
       },
     ];
 
-    const response = await client.invoke(messages, {
-      temperature: 0.8,
-    });
+    const response = await callAi(messages, finalApiKey, { temperature: 0.8 });
 
-    return NextResponse.json({ content: response.content });
+    return NextResponse.json({ content: response });
   } catch (error) {
     console.error('AI对白优化错误:', error);
     return NextResponse.json(

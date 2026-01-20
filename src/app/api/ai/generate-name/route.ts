@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { GroqClient, GroqMessage } from '@/lib/groq-client';
 import { SiliconFlowClient, SiliconFlowMessage } from '@/lib/siliconflow-client';
 import { generateRandomName, validateNameQuality } from '@/lib/name-generator';
 import { getApiKey } from '@/lib/ai-config';
@@ -270,22 +270,22 @@ ${region ? `- 地域特色：${region}` : ''}
         result += chunk;
       }
     } else {
-      // 使用 Coze SDK（环境变量）
-      const config = new Config({
-        apiKey: finalApiKey,
-        baseUrl: process.env.COZE_INTEGRATION_BASE_URL,
-      });
-      const client = new LLMClient(config);
-
-      const messages = [
-        { role: 'user' as const, content: prompt }
+      // 使用 Groq（开发者模式）
+      const groqClient = new GroqClient(finalApiKey);
+      const messages: GroqMessage[] = [
+        { role: 'user', content: prompt }
       ];
 
-      const response = await client.invoke(messages, {
-        temperature: 0.8, // 较高的温度以增加创造力
+      const response = await groqClient.streamChat(messages, {
+        model: 'llama-3.1-70b-versatile',
+        temperature: 0.8,
+        maxTokens: 2000,
+        topP: 1.0,
       });
 
-      result = response.content || '';
+      for await (const chunk of response) {
+        result += chunk;
+      }
     }
 
     console.log('[起名系统] LLM原始输出:', result);
